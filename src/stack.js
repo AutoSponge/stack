@@ -47,7 +47,7 @@
     };
     Stack.prototype.apply = function (args, reciever) {
         var val = this.fn.apply(reciever|| this, args);
-        return this.next ? this.next.apply(reciever || this, makeArray(val)) : val;        
+        return this.next ? this.next.apply(makeArray(val), reciever || this) : val;        
     };
     Stack.prototype.clone = function (fn, next) {
         return new Stack(fn || this.fn, next || this.next);
