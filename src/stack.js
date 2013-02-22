@@ -9,7 +9,7 @@
             val.hasOwnProperty(0);
     }
     function makeArray(val) {
-        return isArrayLike(val) ? val : [val];
+        return isArrayLike(val) ? val : val ? [val] : [];
     }
     function Stack(fn, next) {
         if (isArrayLike(fn)) {
