@@ -1,12 +1,15 @@
 (function(global, undef) {
     function isPrimitive(val) {
-        return !(Object(val) === val);
+        return Object(val) !== val;
     }
     function isArrayLike(val) {
         return !isPrimitive(val) && 
-            !(typeof val === "function") &&
+            typeof val !== "function" &&
             val.length && 
             val.hasOwnProperty(0);
+    }
+    function makeArray(val) {
+        return isArrayLike(val) ? val : [val];
     }
     function Stack(fn, next) {
         if (isArrayLike(fn)) {
@@ -39,12 +42,12 @@
         return (this.fn === fn) ? this : this.next && this.next.search(fn);
     };
     Stack.prototype.call = function (arg, reciever) {
-        val = this.fn.call(reciever || this, arg);
+        var val = this.fn.call(reciever || this, arg);
         return this.next ? this.next.call(val) : val;
     };
     Stack.prototype.apply = function (args, reciever) {
-        args = this.fn.apply(reciever|| this, args);
-        return this.next ? this.next.apply(reciever || this, args) : val;        
+        var val = this.fn.apply(reciever|| this, args);
+        return this.next ? this.next.apply(reciever || this, makeArray(val)) : val;        
     };
     Stack.prototype.clone = function (fn, next) {
         return new Stack(fn || this.fn, next || this.next);
@@ -65,6 +68,9 @@
     };
     Stack.prototype.shift = function () {
         return this.penultimate().remove();
+    };
+    Stack.prototype.pop = function () {
+        return this.remove();
     };
     global.Stack = Stack;
 }(this));
