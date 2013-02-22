@@ -11,6 +11,9 @@
     function makeArray(val) {
         return isArrayLike(val) ? val : val ? [val] : [];
     }
+    function defaultFn() {
+        return arguments.length > 1 ? arguments : arguments[0];
+    }
     function Stack(fn, next) {
         if (isArrayLike(fn)) {
             var arr = Array.apply(null, fn);
@@ -19,7 +22,7 @@
         if (!(this instanceof Stack)) {
             return new Stack(fn, next);
         }
-        this.fn = fn || new Function;
+        this.fn = fn || defaultFn;
         this.next = next || undef;
     }
     Stack.prototype.push = function(fn) {
