@@ -43,7 +43,7 @@
     };
     Stack.prototype.call = function (arg, reciever) {
         var val = this.fn.call(reciever || this, arg);
-        return this.next ? this.next.call(val) : val;
+        return this.next ? this.next.call(val, reciever || this) : val;
     };
     Stack.prototype.apply = function (args, reciever) {
         var val = this.fn.apply(reciever|| this, args);
