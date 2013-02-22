@@ -14,10 +14,19 @@
     function defaultFn() {
         return arguments.length > 1 ? arguments : arguments[0];
     }
+    function each(arr, fn) {
+        var i, len;
+        for (i = 0, len = arr.length; i < len; i += 1) {
+            fn(arr[i], i, arr);
+        }
+    }
     function Stack(fn, next) {
         if (isArrayLike(fn)) {
-            var arr = Array.apply(null, fn);
-            return new Stack(arr.shift()).addAll(arr);
+            var stack;
+            each(fn, function (f) {
+                stack = stack ? stack.push(f) : new Stack(f);
+            });
+            return stack;
         }
         if (!(this instanceof Stack)) {
             return new Stack(fn, next);
@@ -28,10 +37,10 @@
     Stack.prototype.push = function(fn) {
         return new Stack(fn, this);
     };
-    Stack.prototype.add = function (fn) {
+    Stack.prototype.unshift = function (fn) {
         return this.next = new Stack(fn, this.next);
     };
-    Stack.prototype.addAll = function (arr) {
+    Stack.prototype.concat = function (arr) {
         var prev = this;
         arr.forEach(function (fn) {
             prev = prev.add(fn);
