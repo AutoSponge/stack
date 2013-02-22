@@ -43,7 +43,7 @@
     Stack.prototype.concat = function (arr) {
         var prev = this;
         arr.forEach(function (fn) {
-            prev = prev.add(fn);
+            prev = prev.unshift(fn);
         });
         return this;
     };
