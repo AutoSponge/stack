@@ -79,7 +79,7 @@
         return previous;
     };
     Stack.prototype.shift = function () {
-        return this.penultimate().shift();
+        return this.penultimate().unshift();
     };
     Stack.prototype.pop = function () {
         return this.unshift();
