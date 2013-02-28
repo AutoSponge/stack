@@ -38,6 +38,86 @@ test("Test basic stack and push with apply", function() {
     ok(Stack(sum).push(flatten).apply([[1],[2],[3]]) === 6);
     ok(Stack([sum, doubleAll, flatten]).apply([[1],[2],[3]]) === 12);
 });
+
+test("shift", function () {
+    function fn1() {return 1;}
+    function fn2() {return 2;}
+    expect(3);
+    var stack = Stack(fn1).push(fn2);
+    ok(stack.call() === 1);
+    var removed = stack.shift();
+    ok(stack.call() === 2);
+    ok(removed.call() === 1);
+});
+test("pop", function () {
+    function fn1() {return 1;}
+    function fn2() {return 2;}
+    function fn3() {return 3;}
+    expect(4);
+    var stack1 = Stack(fn1);
+    var stack2 = stack1.push(fn2);
+    var stack3 = stack2.push(fn3);
+    ok(stack1.call() === 1);
+    var removed = stack3.pop();
+    ok(stack3 === removed);
+    ok(removed.call() === 3);
+    ok(typeof stack3.next === "undefined");
+});
+test("unshift", function () {
+    function fn1() {return 1;}
+    function fn2() {return 2;}
+    function fn3() {return 3;}
+    var stack = Stack(fn1).push(fn2);
+    stack.unshift(fn3);
+    expect(1);
+    ok(stack.call() === 3);
+});
+test("index", function () {
+    function fn1() {return 1;}
+    function fn2() {return 2;}
+    function fn3() {return 3;}
+    var stack1 = Stack(fn1);
+    var stack2 = stack1.push(fn2);
+    var stack3 = stack2.push(fn3);
+    expect(3);
+    ok(stack3.index(2) === stack1);
+    ok(stack3.index(1) === stack2);
+    ok(stack3.index(0) === stack3);
+});
+test("search", function () {
+    function fn1() {return 1;}
+    function fn2() {return 2;}
+    function fn3() {return 3;}
+    var stack1 = Stack(fn1);
+    var stack2 = stack1.push(fn2);
+    var stack3 = stack2.push(fn3);
+    expect(3);
+    ok(stack3.search(fn3) === stack3);
+    ok(stack3.search(fn2) === stack2);
+    ok(stack3.search(fn1) === stack1);
+});
+test("clone", function () {
+    function a(val) {
+        return "a" + val;
+    }
+    function b(val) {
+        return "b" + val;
+    }
+    function c(val) {
+        return "c" + val;
+    }
+    function d(val) {
+        return "d" + val;
+    }
+    var stack = Stack([a, b, c]);
+    expect(3);
+    var clone = stack.clone();
+    ok(stack.call(1) === clone.call(1));
+    clone = stack.clone(d);
+    ok(clone.call(1) === "abd1");
+    clone = stack.clone(null, Stack(d));
+    ok(clone.call(1) === "dc1");
+});
 /*
 (function (namespace) {
     var topics = {};

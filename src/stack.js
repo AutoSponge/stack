@@ -64,11 +64,6 @@
     Stack.prototype.clone = function (fn, next) {
         return new Stack(fn || this.fn, next || this.next);
     };
-    Stack.prototype.unshift = function () {
-        var removed = this.next;
-        this.next = undef;
-        return removed;
-    };
     Stack.prototype.penultimate = function () {
         var current = this;
         var previous;
@@ -78,11 +73,19 @@
         }
         return previous;
     };
+    Stack.prototype.unshift = function (fn) {
+        var last = this.penultimate().next;
+        return last.next = new Stack(fn);
+    };
     Stack.prototype.shift = function () {
-        return this.penultimate().unshift();
+        var last = this.penultimate();
+        var removed = last.next;
+        last.next = undef;
+        return removed;
     };
     Stack.prototype.pop = function () {
-        return this.unshift();
+        this.next = undef;
+        return this;
     };
     global.Stack = Stack;
 }(this));
