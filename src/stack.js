@@ -64,12 +64,19 @@
     Stack.prototype.clone = function (fn, next) {
         return new Stack(fn || this.fn, next || this.next);
     };
-    Stack.prototype.penultimate = function () {
-        var current = this;
+    Stack.prototype.penultimate = function (fn) {
+        var current = this
         var previous;
-        while (current.next) {
+        while (current) {
             previous = current;
             current = current.next;
+            if (fn) {
+                if (current && current.fn === fn) {
+                    break;
+                } else {
+                    previous = undef;
+                }
+            }
         }
         return previous;
     };
