@@ -25,3 +25,9 @@ Push an instance of Stack with fn1 (HEAD). `stack = Stack(fn1, fn2)`
 `stack.unshift(fn2)`
 Create an instance of Stack with fn1 (HEAD). `stack = Stack(fn1)`
 Create instance of Stack with fn2 (TAIL) and update stack.next. `Stack(fn1, fn2), Stack(fn2, undefined)` or `stack.next`
+
+TODO
+====
+* create pubsub implementation as example usage
+* create branching logic (CPS?)
+* create worker implementation (needs async call/apply)
