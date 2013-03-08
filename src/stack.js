@@ -37,7 +37,7 @@
     Stack.prototype.push = function(fn) {
         return new Stack(fn, this);
     };
-    Stack.prototype.unshift = function (fn) {
+    Stack.prototype.insert = function (fn) {
         return this.next = new Stack(fn, this.next);
     };
     Stack.prototype.concat = function (arr) {
@@ -64,30 +64,33 @@
     Stack.prototype.clone = function (fn, next) {
         return new Stack(fn || this.fn, next || this.next);
     };
+    Stack.prototype.tail = function () {
+        var current = this;
+        while(current.next) {
+            current = current.next;
+        }
+        return current;
+    };
     Stack.prototype.penultimate = function (fn) {
         var current = this
         var previous;
-        while (current) {
+        while (fn ? current.next && current.fn !== fn : current.next) {
             previous = current;
             current = current.next;
-            if (fn) {
-                if (current && current.fn === fn) {
-                    break;
-                } else {
-                    previous = undef;
-                }
-            }
         }
         return previous;
     };
     Stack.prototype.unshift = function (fn) {
-        var last = this.penultimate().next;
-        return last.next = new Stack(fn);
+        return this.tail().insert(fn);
+    };
+    Stack.prototype.after = function (match, fn) {
+        var p = this.penultimate(match || undef);
+        return p ? p.next.insert(fn) : this;
     };
     Stack.prototype.shift = function () {
-        var last = this.penultimate();
-        var removed = last.next;
-        last.next = undef;
+        var p = this.penultimate();
+        var removed = p.next;
+        p.next = undef;
         return removed;
     };
     Stack.prototype.pop = function () {

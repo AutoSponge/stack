@@ -38,7 +38,28 @@ test("Test basic stack and push with apply", function() {
     ok(Stack(sum).push(flatten).apply([[1],[2],[3]]) === 6);
     ok(Stack([sum, doubleAll, flatten]).apply([[1],[2],[3]]) === 12);
 });
-
+test("tail", function () {
+    function fn1() {return 1;}
+    function fn2() {return 2;}
+    expect(1);
+    var stack1 = Stack(fn1);
+    var stack2 = stack1.push(fn2);
+    ok(stack2.tail() === stack1);
+});
+test("penultimate", function () {
+    function fn1() {return 1;}
+    function fn2() {return 2;}
+    function fn3() {return 3;}
+    function fn4() {return 4;}
+    expect(3);
+    var stack1 = Stack(fn1);
+    var stack2 = stack1.push(fn2);
+    var stack3 = stack2.push(fn3);
+    var stack4 = stack3.push(fn4);
+    ok(stack3.penultimate() === stack2);
+    ok(stack4.penultimate() === stack2);
+    ok(stack4.penultimate(fn2) === stack3);
+});
 test("shift", function () {
     function fn1() {return 1;}
     function fn2() {return 2;}
