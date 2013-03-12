@@ -189,4 +189,58 @@ test("clone", function () {
     
     namespace.PubSub = PubSub;
 }(this));
+
+///////
+(function (namespace) {
+    var topics = {};
+    PubSub = {
+        subscribe: function (topic, fn, reciever) {
+            var arr = topics[topic] = topics[topic] || [];
+            arr.push({
+                fn: fn,
+                reciever: reciever
+            });
+            return this;
+        },
+        publish: function (topic, data) {
+            (topics[topic] || []).forEach(function (obj) {
+                obj.fn.call(obj.reciever, data || {});
+            })
+        }
+    }   
+    namespace.PubSub = PubSub;
+}(this));
+
+function Given(fn) {
+    if (!(this instanceof Given)) {
+        return new Given(fn);
+    }
+    this.head = this.tail = new Stack(fn);
+};
+Given.prototype.and = function (fn) {
+    this.head = this.head.push(fn);
+    return this;
+};
+Given.prototype.when = function (topic) {
+    PubSub.subscribe(topic, this.fire, this);
+    return this;
+};
+Given.prototype.fire = function (data) {
+    return this.head.call(data);
+};
+Given.prototype.then = function (fn) {
+    this.tail = this.tail.insert(fn);
+    return this;
+};
+
+Given(function (data) {
+        console.log(data);
+        return data === 1;
+    })
+    .when("test")
+    .then(function () {console.log("success");});
+    
+PubSub.publish("test", 1);
+
+
 */
