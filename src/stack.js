@@ -55,11 +55,11 @@
     };
     Stack.prototype.call = function (arg, reciever) {
         var val = this.fn.call(reciever || this, arg);
-        return this.next ? this.next.call(val, reciever || this) : val;
+        return this.next && val !== false ? this.next.call(val, reciever || this) : val;
     };
     Stack.prototype.apply = function (args, reciever) {
         var val = this.fn.apply(reciever|| this, args);
-        return this.next ? this.next.apply(makeArray(val), reciever || this) : val;        
+        return this.next && val !== false ? this.next.apply(makeArray(val), reciever || this) : val;        
     };
     Stack.prototype.clone = function (fn, next) {
         return new Stack(fn || this.fn, next || this.next);
