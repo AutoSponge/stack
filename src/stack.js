@@ -14,10 +14,11 @@
     function defaultFn() {
         return arguments.length > 1 ? arguments : arguments[0];
     }
-    function each(arr, fn) {
+    function each(obj, fn, reciever) {
         var i, len;
+        var arr = typeof obj === "string" ? obj.split("") : obj;
         for (i = 0, len = arr.length; i < len; i += 1) {
-            fn(arr[i], i, arr);
+            fn.call(reciever || arr, arr[i], i, arr);
         }
     }
     function Stack(fn, next) {
@@ -42,7 +43,7 @@
     };
     Stack.prototype.concat = function (arr) {
         var prev = this;
-        arr.forEach(function (fn) {
+        each(arr, function (fn) {
             prev = prev.unshift(fn);
         });
         return this;
