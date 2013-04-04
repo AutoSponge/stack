@@ -31,3 +31,4 @@ TODO
 * create pubsub implementation as example usage
 * create branching logic (CPS?)
 * create worker implementation (needs async call/apply)
+* rewrite stack iteration to use trampolining and avoid stack limits
