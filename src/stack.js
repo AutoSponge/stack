@@ -54,6 +54,14 @@
     Stack.prototype.search = function (fn) {
         return (this.fn === fn) ? this : this.next && this.next.search(fn);
     };
+    Stack.prototype.distribute = function (arg, reciever) {
+        this.fn.call(reciever || this, arg);
+        return this.next ? this.next.distribute(arg, reciever || this) : arg;
+    };
+    Stack.prototype.distributeAll = function (args, reciever) {
+        this.fn.apply(reciever|| this, args);
+        return this.next ? this.next.distributeAll(makeArray(args), reciever || this) : args;        
+    };
     Stack.prototype.call = function (arg, reciever) {
         var val = this.fn.call(reciever || this, arg);
         return this.next && val !== false ? this.next.call(val, reciever || this) : val;
