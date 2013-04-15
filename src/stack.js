@@ -51,8 +51,8 @@
     Stack.prototype.index = function (idx) {
         return !idx ? this : this.next && this.next.index(idx - 1);
     };
-    Stack.prototype.priorNext = function (stack) {
-        return this.next === stack ? this : this.next && this.next.priorNext(stack);
+    Stack.prototype.priorFn = function (fn) {
+        return (this.next && this.next.fn === fn) ? this : this.next && this.next.prior(fn);
     };
     Stack.prototype.priorFn = function (fn) {
         return (this.next && this.next.fn === fn) ? this : this.next && this.next.prior(fn);
