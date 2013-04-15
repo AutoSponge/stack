@@ -55,7 +55,7 @@
         return this.next && this.next.next === stack ? this : this.next && this.next.priorNext(stack);
     };
     Stack.prototype.priorFn = function (fn) {
-        return (this.next && this.next.fn === fn) ? this : this.next && this.next.prior(fn);
+        return (this.next && this.next.fn === fn) ? this : this.next && this.next.priorFn(fn);
     };
     Stack.prototype.searchNext = function (stack) {
         return this.priorNext(stack).next;
