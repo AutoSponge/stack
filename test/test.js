@@ -139,108 +139,30 @@ test("clone", function () {
     clone = stack.clone(null, Stack(d));
     ok(clone.call(1) === "dc1");
 });
-/*
-(function (namespace) {
-    var topics = {};
-    function getTopic(key) {
-        return topics[key];
+test("distribute", function () {
+    var aVal = 0;
+    var bVal = 0;
+    var cVal = 0;
+    function a(val) {
+        aVal += (val + (this.bonus || 0));
     }
-    function isStack(stack) {
-        return stack instanceof Stack;
+    function b(val) {
+        bVal += (val + 1 + (this.bonus || 0));
     }
-    function derivatives(topic) {
-        return str.split("/").map(function (e, i, arr) {
-            var copy = arr.slice(0);
-            return i === 0 ? str : (copy.splice(i, 1, "*"), copy.join("/"));
-        });
+    function c(val) {
+        cVal += (val + 2 + (this.bonus || 0));
     }
-    function getStacks(topic) {
-        return derivatives(topic).map(getTopic).filter(isStack);
-    }
-    function PubSub(id) {
-        if (!(this instanceof PubSub)) {
-            return new PubSub(id);
-        }
-        if (!PubSub.index) {
-            PubSub.index = {};
-        }
-        PubSub.index[id] = this;
-        this.id = id;
-    }
-    PubSub.prototype.subscribe = function (topic, fn) {
-        var stack = topics[topic];
-        if (!stack) {
-            topics[topic] = new Stack(fn);
-        } else {
-            stack.push(fn);
-        }
-        return this;
-    };
-    PubSub.prototype.unsubscribe = function (topic, fn) {
-        var stack = topics[topic];
-        
-        return this;
-    };
-    PubSub.prototype.publish = function (topic, data, context) {
-        getStacks(topic).forEach(function (stack) {
-            stack.call(context, data);
-        });
-    };
-    
-    namespace.PubSub = PubSub;
-}(this));
-
-///////
-(function (namespace) {
-    var topics = {};
-    PubSub = {
-        subscribe: function (topic, fn, reciever) {
-            var arr = topics[topic] = topics[topic] || [];
-            arr.push({
-                fn: fn,
-                reciever: reciever
-            });
-            return this;
-        },
-        publish: function (topic, data) {
-            (topics[topic] || []).forEach(function (obj) {
-                obj.fn.call(obj.reciever, data || {});
-            })
-        }
-    }   
-    namespace.PubSub = PubSub;
-}(this));
-
-function Given(fn) {
-    if (!(this instanceof Given)) {
-        return new Given(fn);
-    }
-    this.head = this.tail = new Stack(fn);
-};
-Given.prototype.and = function (fn) {
-    this.head = this.head.push(fn);
-    return this;
-};
-Given.prototype.when = function (topic) {
-    PubSub.subscribe(topic, this.fire, this);
-    return this;
-};
-Given.prototype.fire = function (data) {
-    return this.head.call(data);
-};
-Given.prototype.then = function (fn) {
-    this.tail = this.tail.insert(fn);
-    return this;
-};
-
-Given(function (data) {
-        console.log(data);
-        return data === 1;
-    })
-    .when("test")
-    .then(function () {console.log("success");});
-    
-PubSub.publish("test", 1);
-
-
-*/
+    var Stack = Stack([a, b, c]);
+    stack.distribute(1);
+    expect(6);
+    ok(aVal === 1);
+    ok(bVal === 2);
+    ok(cVal === 3);
+    aVal = 0;
+    bVal = 0;
+    cVal = 0;
+    stack.distribute(1, {bonus: 1});
+    ok(aVal === 2);
+    ok(bVal === 3);
+    ok(cVal === 4);
+});
