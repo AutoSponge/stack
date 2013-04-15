@@ -105,7 +105,7 @@ test("index", function () {
     ok(stack3.index(1) === stack2);
     ok(stack3.index(0) === stack3);
 });
-test("search", function () {
+test("searchFn", function () {
     function fn1() {return 1;}
     function fn2() {return 2;}
     function fn3() {return 3;}
@@ -113,9 +113,9 @@ test("search", function () {
     var stack2 = stack1.push(fn2);
     var stack3 = stack2.push(fn3);
     expect(3);
-    ok(stack3.search(fn3) === stack3);
-    ok(stack3.search(fn2) === stack2);
-    ok(stack3.search(fn1) === stack1);
+    ok(stack3.searchFn(fn3) === stack3);
+    ok(stack3.searchFn(fn2) === stack2);
+    ok(stack3.searchFn(fn1) === stack1);
 });
 test("clone", function () {
     function a(val) {
