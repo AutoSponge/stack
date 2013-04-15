@@ -57,7 +57,7 @@ test("priorNext", function () {
     var stack3 = stack2.push(fn3);
     var stack4 = stack3.push(fn4);
     ok(stack3.priorNext() === stack2);
-    ok(stack4.priorNext() === );
+    ok(stack4.priorNext() === stack2);
     ok(stack4.priorNext(stack2) === stack3);
 });
 test("shift", function () {
