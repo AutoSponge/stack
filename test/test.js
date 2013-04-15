@@ -46,7 +46,7 @@ test("tail", function () {
     var stack2 = stack1.push(fn2);
     ok(stack2.tail() === stack1);
 });
-test("penultimate", function () {
+test("priorNext", function () {
     function fn1() {return 1;}
     function fn2() {return 2;}
     function fn3() {return 3;}
@@ -56,9 +56,9 @@ test("penultimate", function () {
     var stack2 = stack1.push(fn2);
     var stack3 = stack2.push(fn3);
     var stack4 = stack3.push(fn4);
-    ok(stack3.penultimate() === stack2);
-    ok(stack4.penultimate() === stack2);
-    ok(stack4.penultimate(fn2) === stack3);
+    ok(stack3.priorNext() === stack2);
+    ok(stack4.priorNext() === stack2);
+    ok(stack4.priorNext(fn2) === stack3);
 });
 test("shift", function () {
     function fn1() {return 1;}
