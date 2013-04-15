@@ -51,8 +51,17 @@
     Stack.prototype.index = function (idx) {
         return !idx ? this : this.next && this.next.index(idx - 1);
     };
-    Stack.prototype.search = function (fn) {
-        return (this.fn === fn) ? this : this.next && this.next.search(fn);
+    Stack.prototype.priorNext = function (stack) {
+        return this.next === stack ? this : this.next && this.next.priorNext(stack);
+    };
+    Stack.prototype.priorFn = function (fn) {
+        return (this.next && this.next.fn === fn) ? this : this.next && this.next.prior(fn);
+    };
+    Stack.prototype.searchNext = function (stack) {
+        return this.priorNext(stack).next;
+    };
+    Stack.prototype.searchFn = function (fn) {
+        return this.priorFn(fn).next;
     };
     Stack.prototype.distribute = function (arg, reciever) {
         this.fn.call(reciever || this, arg);
@@ -80,24 +89,15 @@
         }
         return current;
     };
-    Stack.prototype.penultimate = function (fn) {
-        var current = this
-        var previous;
-        while (fn ? current.next && current.fn !== fn : current.next) {
-            previous = current;
-            current = current.next;
-        }
-        return previous;
-    };
     Stack.prototype.unshift = function (fn) {
         return this.tail().insert(fn);
     };
     Stack.prototype.after = function (match, fn) {
-        var p = this.penultimate(match || undef);
+        var p = this.priorNext(match || undef);
         return p ? p.next.insert(fn) : this;
     };
     Stack.prototype.shift = function () {
-        var p = this.penultimate();
+        var p = this.priorNext();
         var removed = p.next;
         p.next = undef;
         return removed;
