@@ -152,7 +152,7 @@ test("distribute", function () {
     function c(val) {
         cVal += (val + 2 + (this.bonus || 0));
     }
-    var Stack = Stack([a, b, c]);
+    var stack = Stack([a, b, c]);
     stack.distribute(1);
     expect(6);
     ok(aVal === 1);
