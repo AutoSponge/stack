@@ -58,10 +58,21 @@
         return (this.next && this.next.fn === fn) ? this : this.next && this.next.priorFn(fn);
     };
     Stack.prototype.searchNext = function (stack) {
-        return this.priorNext(stack).next;
+        var p;
+        if (this.next === stack) {
+            return this;
+        }
+        p = this.priorNext(stack);
+        return p && p.next;
+
     };
     Stack.prototype.searchFn = function (fn) {
-        return this.priorFn(fn).next;
+        var p;
+        if (this.fn === fn) {
+            return this;
+        }
+        p = this.priorFn(fn);
+        return p && p.next;
     };
     Stack.prototype.distribute = function (arg, reciever) {
         this.fn.call(reciever || this, arg);
