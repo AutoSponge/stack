@@ -166,3 +166,30 @@ test("distribute", function () {
     ok(bVal === 3);
     ok(cVal === 4);
 });
+test("distributeAll", function () {
+    var aVal = 0;
+    var bVal = 0;
+    var cVal = 0;
+    function a(x, y, z) {
+        aVal += (x + (this.bonus || 0));
+    }
+    function b(x, y, z) {
+        bVal += (y + 1 + (this.bonus || 0));
+    }
+    function c(x, y, z) {
+        cVal += (z + 2 + (this.bonus || 0));
+    }
+    var stack = Stack([a, b, c]);
+    stack.distributeAll([1, 2, 3]);
+    expect(6);
+    ok(aVal === 1);
+    ok(bVal === 3);
+    ok(cVal === 5);
+    aVal = 0;
+    bVal = 0;
+    cVal = 0;
+    stack.distributeAll([1, 2, 3], {bonus: 1});
+    ok(aVal === 2);
+    ok(bVal === 4);
+    ok(cVal === 6);
+});
