@@ -32,3 +32,4 @@ TODO
 * create branching logic (CPS?)
 * create worker implementation (needs async call/apply)
 * rewrite stack iteration to use trampolining and avoid stack limits
+* add tests for prior/search fn/next as needed
