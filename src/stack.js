@@ -94,11 +94,7 @@
         return new Stack(fn || this.fn, next || this.next);
     };
     Stack.prototype.tail = function () {
-        var current = this;
-        while(current.next) {
-            current = current.next;
-        }
-        return current;
+        return this.searchNext();
     };
     Stack.prototype.unshift = function (fn) {
         return this.tail().insert(fn);
