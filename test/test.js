@@ -60,6 +60,22 @@ test("priorNext", function () {
     ok(stack4.priorNext() === stack2);
     ok(stack4.priorNext(stack1) === stack3);
 });
+test("priorFn", function () {
+    function fn1() {return 1;}
+    function fn2() {return 2;}
+    function fn3() {return 3;}
+    function fn4() {return 4;}
+    expect(5);
+    var stack1 = Stack(fn1);
+    var stack2 = stack1.push(fn2);
+    var stack3 = stack2.push(fn3);
+    var stack4 = stack3.push(fn4);
+    ok(stack4.priorFn(fn1) === stack2);
+    ok(stack4.priorFn(fn2) === stack3);
+    ok(stack4.priorFn(fn3) === stack4);
+    ok(typeof stack4.priorFn(fn4) === "undefined");
+    ok(typeof stack4.priorFn() === "undefined");    
+});
 test("shift", function () {
     function fn1() {return 1;}
     function fn2() {return 2;}
