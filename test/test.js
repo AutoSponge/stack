@@ -133,6 +133,19 @@ test("searchFn", function () {
     ok(stack3.searchFn(fn2) === stack2);
     ok(stack3.searchFn(fn1) === stack1);
 });
+test("searchNext", function () {
+    function fn1() {return 1;}
+    function fn2() {return 2;}
+    function fn3() {return 3;}
+    var stack1 = Stack(fn1);
+    var stack2 = stack1.push(fn2);
+    var stack3 = stack2.push(fn3);
+    expect(4);
+    ok(typeof stack3.searchNext(stack3) === "undefined");
+    ok(stack3.searchNext(stack2) === stack3);
+    ok(stack3.searchNext(stack1) === stack2);
+    ok(stack3.searchNext() === stack1);
+});
 test("clone", function () {
     function a(val) {
         return "a" + val;
