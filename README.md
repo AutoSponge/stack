@@ -7,7 +7,7 @@ Pass Stack function(s):
 * Each stack _NODE_ with an *undefined* `next` property is a stack _TAIL_
 
 Ease of use:
-* Treat stacks like arrays or lists (linked lists actually)
+* Treat stacks like arrays or lists ([singly linked lists](http://en.wikipedia.org/wiki/Linked_list#Singly_linked_list) actually)
 * Many array methods are implemented using the same signature as native functions
 
 Recursion:
