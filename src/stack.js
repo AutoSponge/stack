@@ -265,7 +265,7 @@
     };
     /**
      * [a][b][c].pop() => [a], [b][c] // [a]
-     * @returns {*}
+     * @returns {Stack}
      */
     Stack.prototype.pop = function () {
         this.next = undef;
