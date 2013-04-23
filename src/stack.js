@@ -9,7 +9,7 @@
  * [a,b,c]              = an array of functions 'a', 'b', 'c'
  * [default]            = an instance of Stack with 'defaultFn' function
  * [a][b]               = an instance of Stack with function 'a' and a next [b]
- * [a][b][c]            = an instance of Stack with the head [a] and tail [c]
+ * [a[b[c]]]            = an instance of Stack with the head [a] and tail [c]
  * {x}                  = some value x
  * [{x},{y}]            = an array of values {x} and {y}
  * a(x)                 = function 'a' invoked with argument {x}
@@ -37,8 +37,8 @@
      * Stack
      * Stack() => [default] //[default]
      * Stack(a) => [a] //[a]
-     * Stack([a,b,c]) => [a][b][c] //[a][b][c]
-     * Stack(a, [b]) => [a][b] //[a][b]
+     * Stack([a,b,c]) => [a[b[c]]] // [a[b[c]]]
+     * Stack(a, [b]) => [a[b]] // [a[b]]
      * @param fn {Function|Array}
      * @param [next {Stack}]
      * @returns {Stack}
@@ -58,7 +58,7 @@
     }
     /**
      * push
-     * [a].push(b) => [a][b].push(c) => [a][b][c] //[a][b][c]
+     * [a].push(b) => [a[b]].push(c) => [a[b[c]]] // [a[b[c]]]
      * @param fn {Function}
      * @returns {Stack}
      */
@@ -67,7 +67,7 @@
     };
     /**
      * insert
-     * [a].insert(c) => [a][c].insert(b) => [a][b][c] //[a][b][c]
+     * [a].insert(c) => [a[c]].insert(b) => [a[b[c]]] // [a[b[c]]]
      * @param fn
      * @returns {Stack}
      */
@@ -76,7 +76,7 @@
     };
     /**
      * index
-     * [a][b][c].index(1) // [b]
+     * [a[b[c]]].index(1) // [b]
      * @param idx
      * @returns {Stack|undefined}
      */
@@ -88,7 +88,7 @@
     });
     /**
      * priorNext
-     * [a][b][c][d].priorNext([d]) // [b]
+     * [a[b[c[d]]]].priorNext([d]) // [b]
      * @param [stack]
      * @returns {Stack|undefined}
      */
@@ -100,7 +100,7 @@
     });
     /**
      * priorFn
-     * [a][b][c].priorNext(b) // [a]
+     * [a[b[c]]].priorNext(b) // [a]
      * @param fn
      * @returns {Stack|undefined}
      */
@@ -112,7 +112,7 @@
     });
     /**
      * isNext
-     * [a][b].isNext([b]) //true
+     * [a[b]].isNext([b]) //true
      * @param stack
      * @returns {boolean}
      */
@@ -130,7 +130,7 @@
     };
     /**
      * searchNext
-     * [a][b][c].searchNext([c]) //[b]
+     * [a[b[c]]].searchNext([c]) //[b]
      * @param [stack]
      * @returns {Stack|undefined}
      */
@@ -142,7 +142,7 @@
     });
     /**
      * searchFn
-     * [a][b][c].searchFn(b) //[b]
+     * [a[b[c]]].searchFn(b) //[b]
      * @param fn
      * @returns {Stack|undefined}
      */
@@ -154,8 +154,8 @@
     });
     /**
      * distribute
-     * [a][b][c].distribute({x}) || a(x), b(x), c(x)
-     * [a][b][c].distribute({x}, ?) || ?.a(x), ?.b(x), ?.c(x)
+     * [a[b[c]]].distribute({x}) || a(x), b(x), c(x)
+     * [a[b[c]]].distribute({x}, ?) || ?.a(x), ?.b(x), ?.c(x)
      * @param arg
      * @param receiver
      * @returns {undefined}
@@ -169,8 +169,8 @@
     });
     /**
      * distributeAll
-     * [a][b][c].distribute([{x},{y},{z}]) || a(x,y,z), b(x,y,z), c(x,y,z)
-     * [a][b][c].distribute([{x},{y},{z}], ?) || ?.a(x,y,z), ?.b(x,y,z), ?.c(x,y,z)
+     * [a[b[c]]].distribute([{x},{y},{z}]) || a(x,y,z), b(x,y,z), c(x,y,z)
+     * [a[b[c]]].distribute([{x},{y},{z}], ?) || ?.a(x,y,z), ?.b(x,y,z), ?.c(x,y,z)
      * @param args
      * @param receiver
      * @returns {undefined}
@@ -184,8 +184,8 @@
     });
     /**
      * call
-     * [a][b][c].call({x}) // a(b(c(x)))
-     * [a][b][c].call({x}, ?) // ?.a(?.b(?.c(x)))
+     * [a[b[c]]].call({x}) // a(b(c(x)))
+     * [a[b[c]]].call({x}, ?) // ?.a(?.b(?.c(x)))
      * @param arg
      * @param receiver
      * @returns {*}
@@ -199,8 +199,8 @@
     });
     /**
      * apply
-     * [a][b][c].apply([{x},{y},{z}]) // a(b(c(x,y,z)))
-     * [a][b][c].apply([{x},{y},{z}], ?) // ?.a(?.b(?.c(x,y,z)))
+     * [a[b[c]]].apply([{x},{y},{z}]) // a(b(c(x,y,z)))
+     * [a[b[c]]].apply([{x},{y},{z}], ?) // ?.a(?.b(?.c(x,y,z)))
      * @param args
      * @param receiver
      * @returns {*}
@@ -214,10 +214,10 @@
     });
     /**
      * clone
-     * [a][b][c].clone() // [a][b][c]
-     * [a][b][c].clone(d) // [d][b][c]
-     * [a][b][c].clone(null, [d]) // [a][d]
-     * [a][b][c].clone(d, [e]) // [d][e]
+     * [a[b[c]]].clone() // [a[b[c]]]
+     * [a[b[c]]].clone(d) // [d[b[c]]]
+     * [a[b[c]]].clone(null, [d]) // [a[d]]
+     * [a[b[c]]].clone(d, [e]) // [d[e]]
      * @param fn
      * @param next
      * @returns {Stack}
@@ -227,7 +227,7 @@
     };
     /**
      * tail
-     * [a][b][c].tail() // [c]
+     * [a[b[c]]].tail() // [c]
      * @returns {Stack|undefined}
      */
     Stack.prototype.tail = function () {
@@ -235,7 +235,7 @@
     };
     /**
      * unshift
-     * [a][b].unshift(c) => [a][b][c] // [c]
+     * [a[b]].unshift(c) => [a[b[c]]] // [c]
      * @param fn
      * @returns {Stack}
      */
@@ -244,7 +244,7 @@
     };
     /**
      * before
-     * [a][b][c].before(b, d) => [a][d][b][c] // [d][b][c]
+     * [a[b[c]]].before(b, d) => [a[d[b[c]]]] // [d[b[c]]]
      * @param a
      * @param b
      * @returns {Stack}
@@ -254,7 +254,7 @@
     };
     /**
      * shift
-     * [a][b][c].shift() => [a][b] // [c]
+     * [a[b[c]]].shift() => [a[b]] // [c]
      * @returns {Stack}
      */
     Stack.prototype.shift = function () {
@@ -264,7 +264,7 @@
         return removed;
     };
     /**
-     * [a][b][c].pop() => [a], [b][c] // [a]
+     * [a[b[c]]].pop() => [a], [b[c]] // [a]
      * @returns {Stack}
      */
     Stack.prototype.pop = function () {
@@ -273,8 +273,8 @@
     };
     /**
      * some
-     * [a][b][c].some() || !c() && !b() && !c() // true|false
-     * [a][b][c].some({x}) || !c(x) && !b(x) && !c(x) // true|false
+     * [a[b[c]]].some() || !c() && !b() && !c() // true|false
+     * [a[b[c]]].some({x}) || !c(x) && !b(x) && !c(x) // true|false
      * @param arg
      * @param receiver
      * @returns {boolean}
@@ -290,8 +290,8 @@
     });
     /**
      * every
-     * [a][b][c].every() || c() && b() && c() // true|false
-     * [a][b][c].every({x}) || c(x) && b(x) && c(x) // true|false
+     * [a[b[c]]].every() || c() && b() && c() // true|false
+     * [a[b[c]]].every({x}) || c(x) && b(x) && c(x) // true|false
      * @param arg
      * @param receiver
      * @returns {boolean}
