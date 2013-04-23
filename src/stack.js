@@ -12,9 +12,10 @@
  * [a][b][c]            = an instance of Stack with the head [a] and tail [c]
  * {x}                  = some value x
  * [{x},{y}]            = an array of values {x} and {y}
- * a({x})               = function 'a' invoked with argument {x}
- * a({x}, {y})          = function 'a' invoked with arguments {x} and {y}
+ * a(x)                 = function 'a' invoked with argument {x}
+ * a(x, y)              = function 'a' invoked with arguments {x} and {y}
  * ?                    = an object
+ * &&                   = logical and
  */
 (function(global, undef) {
     function makeArray(val) {
@@ -153,8 +154,8 @@
     });
     /**
      * distribute
-     * [a][b][c].distribute({x}) || a({x}), b({x}), c({x})
-     * [a][b][c].distribute({x}, ?) || ?.a({x}), ?.b({x}), ?.c({x})
+     * [a][b][c].distribute({x}) || a(x), b(x), c(x)
+     * [a][b][c].distribute({x}, ?) || ?.a(x), ?.b(x), ?.c(x)
      * @param arg
      * @param receiver
      * @returns {undefined}
@@ -168,8 +169,8 @@
     });
     /**
      * distributeAll
-     * [a][b][c].distribute([{x},{y},{z}]) || a({x},{y},{z}), b({x},{y},{z}), c({x},{y},{z})
-     * [a][b][c].distribute([{x},{y},{z}], ?) || ?.a({x},{y},{z}), ?.b({x},{y},{z}), ?.c({x},{y},{z})
+     * [a][b][c].distribute([{x},{y},{z}]) || a(x,y,z), b(x,y,z), c(x,y,z)
+     * [a][b][c].distribute([{x},{y},{z}], ?) || ?.a(x,y,z), ?.b(x,y,z), ?.c(x,y,z)
      * @param args
      * @param receiver
      * @returns {undefined}
@@ -183,8 +184,8 @@
     });
     /**
      * call
-     * [a][b][c].call({x}) // a(b(c({x})))
-     * [a][b][c].call({x}, ?) // ?.a(?.b(?.c({x})))
+     * [a][b][c].call({x}) // a(b(c(x)))
+     * [a][b][c].call({x}, ?) // ?.a(?.b(?.c(x)))
      * @param arg
      * @param receiver
      * @returns {*}
@@ -198,8 +199,8 @@
     });
     /**
      * apply
-     * [a][b][c].apply([{x},{y},{z}]) // a(b(c({x},{y},{z})))
-     * [a][b][c].apply([{x},{y},{z}], ?) // ?.a(?.b(?.c({x},{y},{z})))
+     * [a][b][c].apply([{x},{y},{z}]) // a(b(c(x,y,z)))
+     * [a][b][c].apply([{x},{y},{z}], ?) // ?.a(?.b(?.c(x,y,z)))
      * @param args
      * @param receiver
      * @returns {*}
@@ -270,5 +271,39 @@
         this.next = undef;
         return this;
     };
+    /**
+     * some
+     * [a][b][c].some() || !c() && !b() && !c() // true|false
+     * [a][b][c].some({x}) || !c(x) && !b(x) && !c(x) // true|false
+     * @param arg
+     * @param receiver
+     * @returns {boolean}
+     */
+    Stack.prototype.some = recur(function some(arg, receiver) {
+        var self = this;
+        return function () {
+            var val = self.fn.call(receiver || self, arg);
+            return val !== true && !self.next ? false :
+                self.next && val !== true ? some.call(self.next, arg, receiver || self) :
+                    true;
+        };
+    });
+    /**
+     * every
+     * [a][b][c].every() || c() && b() && c() // true|false
+     * [a][b][c].every({x}) || c(x) && b(x) && c(x) // true|false
+     * @param arg
+     * @param receiver
+     * @returns {boolean}
+     */
+    Stack.prototype.every = recur(function every(arg, receiver) {
+        var self = this;
+        return function () {
+            var val = self.fn.call(receiver || self, arg);
+            return val !== false && !self.next ? true :
+                self.next && val !== false ? every.call(self.next, arg, receiver || self) :
+                    false;
+        };
+    });
     global.Stack = Stack;
 }(this));

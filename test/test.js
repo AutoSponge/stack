@@ -1,4 +1,4 @@
-test("Test basic stack and push with call", function() {
+test("push, call", function() {
     function a(val) {
         return "a" + val;
     }
@@ -14,7 +14,7 @@ test("Test basic stack and push with call", function() {
     ok(Stack(a).push(b).push(c).call(1) === "abc1");
     ok(Stack([a,b,c]).call(1) === "abc1");
 });
-test("Test basic stack and push with apply", function() {
+test("push, apply", function() {
     function flatten() {
         var args = Array.prototype.slice.call(arguments, 0);
     	return args.reduce(function(a, b) {
@@ -280,4 +280,66 @@ test("before", function () {
     stack.before(a, b);
     expect(1);
     ok(stack.call(1) === "cba1");
+});
+test("some", function () {
+    var falsecount = 0;
+    function truthy() {
+        return true;
+    }
+    function falsey() {
+        falsecount += 1;
+        return false;
+    }
+    var allfalse = Stack([falsey, falsey, falsey]);
+    var onetrue = Stack([falsey, truthy, falsey]);
+    expect(6);
+    ok(allfalse.some() === false);
+    ok(falsecount = 3);
+    falsecount = 0;
+    ok(onetrue.some() === true);
+    ok(falsecount = 1);
+    function isOne(data) {
+        return data === 1;
+    }
+    function isTwo(data) {
+        return data === 2;
+    }
+    function isOdd(data) {
+        return data%2 === 1;
+    }
+    allfalse = Stack([isOne, isTwo, isOdd]);
+    ok(allfalse.some(0) === false);
+    onetrue = Stack([isOne, isTwo, isOdd]);
+    ok(onetrue.some(2) === true);
+});
+test("every", function () {
+    var truecount = 0;
+    function truthy() {
+        truecount += 1;
+        return true;
+    }
+    function falsey() {
+        return false;
+    }
+    var alltrue = Stack([truthy, truthy, truthy]);
+    var onefalse = Stack([truthy, falsey, truthy]);
+    expect(6);
+    ok(alltrue.every() === true);
+    ok(truecount = 3);
+    truecount = 0;
+    ok(onefalse.every() === false);
+    ok(truecount = 1);
+    function isOne(data) {
+        return data === 1;
+    }
+    function isTwo(data) {
+        return data === 2;
+    }
+    function isOdd(data) {
+        return data%2 === 1;
+    }
+    alltrue = Stack([isOne, isOdd]);
+    ok(alltrue.every(1) === true);
+    onefalse = Stack([isOne, isTwo, isOdd]);
+    ok(onefalse.every(1) === false);
 });
