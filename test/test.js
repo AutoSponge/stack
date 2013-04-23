@@ -8,11 +8,25 @@ test("push, call", function() {
     function c(val) {
         return "c" + val;
     }
-    expect(4);
+    expect(8);
     ok(Stack(a).call(1) === "a1");
     ok(Stack(a).push(b).call(1) === "ab1");
     ok(Stack(a).push(b).push(c).call(1) === "abc1");
     ok(Stack([a,b,c]).call(1) === "abc1");
+    function sumA(data) {
+        return this.a + data;
+    }
+    function sumB(data) {
+        return this.b + data;
+    }
+    function sumC(data) {
+        return this.c + data;
+    }
+    var obj = {a: "a", b: "b", c: "c"};
+    ok(Stack(sumA).call(1, obj) === "a1");
+    ok(Stack(sumA).push(sumB).call(1, obj) === "ab1");
+    ok(Stack(sumA).push(sumB).push(sumC).call(1, obj) === "abc1");
+    ok(Stack([sumA,sumB,sumC]).call(1, obj) === "abc1");
 });
 test("push, apply", function() {
     function flatten() {
@@ -33,9 +47,18 @@ test("push, apply", function() {
             return a + b;
         });
     }
-    expect(2);
+    expect(3);
     ok(Stack(sum).push(flatten).apply([[1],[2],[3]]) === 6);
     ok(Stack([sum, doubleAll, flatten]).apply([[1],[2],[3]]) === 12);
+    function sumThis() {
+        var args = Array.prototype.slice.call(arguments, 0);
+        var self = this;
+        return args.reduce(function(a, b) {
+            return a + b + self.seed;
+        });
+    }
+    var obj = {seed: 1};
+    ok(Stack([sumThis, doubleAll, flatten]).apply([[1],[2],[3]], obj) === 14);
 });
 test("insert", function () {
     function a(data) {
@@ -292,7 +315,7 @@ test("some", function () {
     }
     var allfalse = Stack([falsey, falsey, falsey]);
     var onetrue = Stack([falsey, truthy, falsey]);
-    expect(6);
+    expect(8);
     ok(allfalse.some() === false);
     ok(falsecount = 3);
     falsecount = 0;
@@ -311,6 +334,13 @@ test("some", function () {
     ok(allfalse.some(0) === false);
     onetrue = Stack([isOne, isTwo, isOdd]);
     ok(onetrue.some(2) === true);
+    function isTest(data) {
+        return data === this.test;
+    }
+    var obj = {test: 1};
+    allfalse = Stack([isTest, isTwo, isOdd]);
+    ok(allfalse.some(0) === false);
+    ok(allfalse.some(1) === true);
 });
 test("every", function () {
     var truecount = 0;
@@ -323,7 +353,7 @@ test("every", function () {
     }
     var alltrue = Stack([truthy, truthy, truthy]);
     var onefalse = Stack([truthy, falsey, truthy]);
-    expect(6);
+    expect(8);
     ok(alltrue.every() === true);
     ok(truecount = 3);
     truecount = 0;
@@ -342,4 +372,12 @@ test("every", function () {
     ok(alltrue.every(1) === true);
     onefalse = Stack([isOne, isTwo, isOdd]);
     ok(onefalse.every(1) === false);
+    function isTest(data) {
+        return data === this.test;
+    }
+    var obj = {test: 1};
+    alltrue = Stack([isOne, isOdd, isTest]);
+    ok(alltrue.every(1, obj) === true);
+    obj.test = 2;
+    ok(alltrue.every(1, obj) === false);
 });

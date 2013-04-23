@@ -194,7 +194,7 @@
         var self = this;
         return function () {
             var val = self.fn.call(receiver || self, arg);
-            return self.next && call.call(self.next, val) || val;
+            return self.next && call.call(self.next, val, receiver) || val;
         };
     });
     /**
@@ -209,7 +209,7 @@
         var self = this;
         return function () {
             var val = self.fn.apply(receiver|| self, args);
-            return self.next && apply.call(self.next, makeArray(val), receiver || self) || val;
+            return self.next && apply.call(self.next, makeArray(val), receiver) || val;
         }
     });
     /**
@@ -284,7 +284,7 @@
         return function () {
             var val = self.fn.call(receiver || self, arg);
             return val !== true && !self.next ? false :
-                self.next && val !== true ? some.call(self.next, arg, receiver || self) :
+                self.next && val !== true ? some.call(self.next, arg, receiver) :
                     true;
         };
     });
@@ -301,7 +301,7 @@
         return function () {
             var val = self.fn.call(receiver || self, arg);
             return val !== false && !self.next ? true :
-                self.next && val !== false ? every.call(self.next, arg, receiver || self) :
+                self.next && val !== false ? every.call(self.next, arg, receiver) :
                     false;
         };
     });
