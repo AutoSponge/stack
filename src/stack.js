@@ -23,6 +23,15 @@
     function defaultFn() {
         return arguments.length > 1 ? arguments : arguments[0];
     }
+    function recur(fn) {
+        return function () {
+            var bounce = fn.apply(this, arguments);
+            while (typeof bounce === "function") {
+                bounce = bounce();
+            }
+            return bounce;
+        };
+    }
     /**
      * Stack
      * Stack() => [default] //[default]
@@ -70,27 +79,36 @@
      * @param idx
      * @returns {Stack|undefined}
      */
-    Stack.prototype.index = function (idx) {
-        return !idx ? this : this.next && this.next.index(idx - 1);
-    };
+    Stack.prototype.index = recur(function index(idx) {
+        var self = this;
+        return function () {
+            return !idx ? self : self.next && index.call(self.next, idx - 1);
+        };
+    });
     /**
      * priorNext
      * [a][b][c][d].priorNext([d]) // [b]
      * @param [stack]
      * @returns {Stack|undefined}
      */
-    Stack.prototype.priorNext = function (stack) {
-        return this.next && this.next.next === stack ? this : this.next && this.next.priorNext(stack);
-    };
+    Stack.prototype.priorNext = recur(function priorNext(stack) {
+        var self = this;
+        return function () {
+            return self.next && self.next.next === stack ? self : self.next && priorNext.call(self.next, stack);
+        };
+    });
     /**
      * priorFn
      * [a][b][c].priorNext(b) // [a]
      * @param fn
      * @returns {Stack|undefined}
      */
-    Stack.prototype.priorFn = function (fn) {
-        return (this.next && this.next.fn === fn) ? this : this.next && this.next.priorFn(fn);
-    };
+    Stack.prototype.priorFn = recur(function priorFn(fn) {
+        var self = this;
+        return function () {
+            return (self.next && self.next.fn === fn) ? self : self.next && priorFn.call(self.next, fn);
+        };
+    });
     /**
      * isNext
      * [a][b].isNext([b]) //true
@@ -115,18 +133,24 @@
      * @param [stack]
      * @returns {Stack|undefined}
      */
-    Stack.prototype.searchNext = function (stack) {
-        return this.isNext(stack) && this || this.next && this.next.searchNext(stack);
-    };
+    Stack.prototype.searchNext = recur(function searchNext(stack) {
+        var self = this;
+        return function () {
+            return self.isNext(stack) && self || self.next && searchNext.call(self.next, stack);
+        };
+    });
     /**
      * searchFn
      * [a][b][c].searchFn(b) //[b]
      * @param fn
      * @returns {Stack|undefined}
      */
-    Stack.prototype.searchFn = function (fn) {
-        return this.isFn(fn) && this || this.next && this.next.searchFn(fn);
-    };
+    Stack.prototype.searchFn = recur(function searchFn(fn) {
+        var self = this;
+        return function () {
+            return self.isFn(fn) && self || self.next && searchFn.call(self.next, fn);
+        };
+    });
     /**
      * distribute
      * [a][b][c].distribute({x}) || a({x}), b({x}), c({x})
@@ -135,10 +159,13 @@
      * @param receiver
      * @returns {undefined}
      */
-    Stack.prototype.distribute = function (arg, receiver) {
-        this.fn.call(receiver || this, arg);
-        this.next && this.next.distribute(arg, receiver || this);
-    };
+    Stack.prototype.distribute = recur(function distribute(arg, receiver) {
+        var self = this;
+        return function () {
+            self.fn.call(receiver || self, arg);
+            return self.next && distribute.call(self.next, arg, receiver || self);
+        };
+    });
     /**
      * distributeAll
      * [a][b][c].distribute([{x},{y},{z}]) || a({x},{y},{z}), b({x},{y},{z}), c({x},{y},{z})
@@ -147,10 +174,13 @@
      * @param receiver
      * @returns {undefined}
      */
-    Stack.prototype.distributeAll = function (args, receiver) {
-        this.fn.apply(receiver|| this, args);
-        this.next && this.next.distributeAll(makeArray(args), receiver || this);
-    };
+    Stack.prototype.distributeAll = recur(function distributeAll(args, receiver) {
+        var self = this;
+        return function () {
+            self.fn.apply(receiver|| self, args);
+            return self.next && distributeAll.call(self.next, makeArray(args), receiver || self);
+        };
+    });
     /**
      * call
      * [a][b][c].call({x}) // a(b(c({x})))
@@ -159,10 +189,13 @@
      * @param receiver
      * @returns {*}
      */
-    Stack.prototype.call = function (arg, receiver) {
-        var val = this.fn.call(receiver || this, arg);
-        return this.next && val !== false ? this.next.call(val, receiver || this) : val;
-    };
+    Stack.prototype.call = recur(function call(arg, receiver) {
+        var self = this;
+        return function () {
+            var val = self.fn.call(receiver || self, arg);
+            return self.next && call.call(self.next, val) || val;
+        };
+    });
     /**
      * apply
      * [a][b][c].apply([{x},{y},{z}]) // a(b(c({x},{y},{z})))
@@ -171,10 +204,13 @@
      * @param receiver
      * @returns {*}
      */
-    Stack.prototype.apply = function (args, receiver) {
-        var val = this.fn.apply(receiver|| this, args);
-        return this.next && val !== false ? this.next.apply(makeArray(val), receiver || this) : val;
-    };
+    Stack.prototype.apply = recur(function apply(args, receiver) {
+        var self = this;
+        return function () {
+            var val = self.fn.apply(receiver|| self, args);
+            return self.next && apply.call(self.next, makeArray(val), receiver || self) || val;
+        }
+    });
     /**
      * clone
      * [a][b][c].clone() // [a][b][c]
