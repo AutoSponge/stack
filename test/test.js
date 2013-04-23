@@ -14,7 +14,6 @@ test("Test basic stack and push with call", function() {
     ok(Stack(a).push(b).push(c).call(1) === "abc1");
     ok(Stack([a,b,c]).call(1) === "abc1");
 });
-
 test("Test basic stack and push with apply", function() {
     function flatten() {
         var args = Array.prototype.slice.call(arguments, 0);
@@ -38,6 +37,22 @@ test("Test basic stack and push with apply", function() {
     ok(Stack(sum).push(flatten).apply([[1],[2],[3]]) === 6);
     ok(Stack([sum, doubleAll, flatten]).apply([[1],[2],[3]]) === 12);
 });
+test("insert", function () {
+    function a(data) {
+        return "a" + data;
+    }
+    function b(data) {
+        return "b" + data;
+    }
+    function c(data) {
+        return "c" + data;
+    }
+    var stack = Stack([a,c]);
+    expect(3);
+    ok(stack.call(1) === "ac1");
+    ok(stack.insert(b).call(1) === "ab1");
+    ok(stack.call(1) === "abc1");
+});
 test("tail", function () {
     function fn1() {return 1;}
     function fn2() {return 2;}
@@ -51,14 +66,16 @@ test("priorNext", function () {
     function fn2() {return 2;}
     function fn3() {return 3;}
     function fn4() {return 4;}
-    expect(3);
     var stack1 = Stack(fn1);
     var stack2 = stack1.push(fn2);
     var stack3 = stack2.push(fn3);
     var stack4 = stack3.push(fn4);
+    expect(5);
     ok(stack3.priorNext() === stack2);
     ok(stack4.priorNext() === stack2);
     ok(stack4.priorNext(stack1) === stack3);
+    ok(typeof stack3.priorNext(stack3) === "undefined");
+    ok(typeof stack1.priorNext() === "undefined");
 });
 test("priorFn", function () {
     function fn1() {return 1;}
@@ -74,7 +91,55 @@ test("priorFn", function () {
     ok(stack4.priorFn(fn2) === stack3);
     ok(stack4.priorFn(fn3) === stack4);
     ok(typeof stack4.priorFn(fn4) === "undefined");
-    ok(typeof stack4.priorFn() === "undefined");    
+    ok(typeof stack4.priorFn() === "undefined");
+});
+test("searchFn", function () {
+    function fn1() {return 1;}
+    function fn2() {return 2;}
+    function fn3() {return 3;}
+    var stack1 = Stack(fn1);
+    var stack2 = stack1.push(fn2);
+    var stack3 = stack2.push(fn3);
+    expect(5);
+    ok(stack3.searchFn(fn3) === stack3);
+    ok(stack3.searchFn(fn2) === stack2);
+    ok(stack3.searchFn(fn1) === stack1);
+    ok(typeof stack1.searchFn(fn3) === "undefined");
+    ok(typeof stack1.searchFn() === "undefined");
+});
+test("searchNext", function () {
+    function fn1() {return 1;}
+    function fn2() {return 2;}
+    function fn3() {return 3;}
+    var stack1 = Stack(fn1);
+    var stack2 = stack1.push(fn2);
+    var stack3 = stack2.push(fn3);
+    expect(5);
+    ok(typeof stack3.searchNext(stack3) === "undefined");
+    ok(stack3.searchNext(stack2) === stack3);
+    ok(stack3.searchNext(stack1) === stack2);
+    ok(stack3.searchNext() === stack1);
+    ok(typeof stack2.searchNext(stack3) === "undefined");
+});
+test("isNext", function () {
+    function fn1() {return 1;}
+    function fn2() {return 2;}
+    function fn3() {return 3;}
+    expect(4);
+    var stack1 = Stack(fn1);
+    var stack2 = stack1.push(fn2);
+    var stack3 = stack2.push(fn3);
+    ok(stack3.isNext(stack2) === true);
+    ok(stack3.isNext(stack1) === false);
+    ok(stack1.isNext() === true);
+    ok(stack2.isNext() === false);
+});
+test("isFn", function () {
+    function fn1() {return 1;}
+    expect(2);
+    var stack1 = Stack(fn1);
+    ok(stack1.isFn(fn1) === true);
+    ok(stack1.isFn(function () {}) === false);
 });
 test("shift", function () {
     function fn1() {return 1;}
@@ -90,7 +155,7 @@ test("pop", function () {
     function fn1() {return 1;}
     function fn2() {return 2;}
     function fn3() {return 3;}
-    expect(4);
+    expect(5);
     var stack1 = Stack(fn1);
     var stack2 = stack1.push(fn2);
     var stack3 = stack2.push(fn3);
@@ -99,14 +164,15 @@ test("pop", function () {
     ok(stack3 === removed);
     ok(removed.call() === 3);
     ok(typeof stack3.next === "undefined");
+    ok(stack2.call() === 1);
 });
 test("unshift", function () {
     function fn1() {return 1;}
     function fn2() {return 2;}
     function fn3() {return 3;}
     var stack = Stack(fn1).push(fn2);
-    stack.unshift(fn3);
-    expect(1);
+    expect(2);
+    ok(typeof stack.unshift(fn3).next === "undefined");
     ok(stack.call() === 3);
 });
 test("index", function () {
@@ -116,35 +182,11 @@ test("index", function () {
     var stack1 = Stack(fn1);
     var stack2 = stack1.push(fn2);
     var stack3 = stack2.push(fn3);
-    expect(3);
+    expect(4);
     ok(stack3.index(2) === stack1);
     ok(stack3.index(1) === stack2);
     ok(stack3.index(0) === stack3);
-});
-test("searchFn", function () {
-    function fn1() {return 1;}
-    function fn2() {return 2;}
-    function fn3() {return 3;}
-    var stack1 = Stack(fn1);
-    var stack2 = stack1.push(fn2);
-    var stack3 = stack2.push(fn3);
-    expect(3);
-    ok(stack3.searchFn(fn3) === stack3);
-    ok(stack3.searchFn(fn2) === stack2);
-    ok(stack3.searchFn(fn1) === stack1);
-});
-test("searchNext", function () {
-    function fn1() {return 1;}
-    function fn2() {return 2;}
-    function fn3() {return 3;}
-    var stack1 = Stack(fn1);
-    var stack2 = stack1.push(fn2);
-    var stack3 = stack2.push(fn3);
-    expect(4);
-    ok(typeof stack3.searchNext(stack3) === "undefined");
-    ok(stack3.searchNext(stack2) === stack3);
-    ok(stack3.searchNext(stack1) === stack2);
-    ok(stack3.searchNext() === stack1);
+    ok(typeof stack1.index(1) === "undefined");
 });
 test("clone", function () {
     function a(val) {
@@ -182,8 +224,8 @@ test("distribute", function () {
         cVal += (val + 2 + (this.bonus || 0));
     }
     var stack = Stack([a, b, c]);
-    stack.distribute(1);
-    expect(6);
+    expect(7);
+    ok(typeof stack.distribute(1) === "undefined");
     ok(aVal === 1);
     ok(bVal === 2);
     ok(cVal === 3);
@@ -209,8 +251,8 @@ test("distributeAll", function () {
         cVal += (z + 2 + (this.bonus || 0));
     }
     var stack = Stack([a, b, c]);
-    stack.distributeAll([1, 2, 3]);
-    expect(6);
+    expect(7);
+    ok(typeof stack.distributeAll([1, 2, 3]) === "undefined");
     ok(aVal === 1);
     ok(bVal === 3);
     ok(cVal === 5);
@@ -221,4 +263,21 @@ test("distributeAll", function () {
     ok(aVal === 2);
     ok(bVal === 4);
     ok(cVal === 6);
+});
+test("before", function () {
+    function a(data) {
+        return "a" + data;
+    }
+    function b(data) {
+        return "b" + data;
+    }
+    function c(data) {
+        return "c" + data;
+    }
+    var stack = Stack();
+    stack.before(null, a);
+    stack.before(a, c);
+    stack.before(a, b);
+    expect(1);
+    ok(stack.call(1) === "cba1");
 });
