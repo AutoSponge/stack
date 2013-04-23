@@ -8,7 +8,7 @@
  * <action> || <result> = the effect of the <action>
  * [a,b,c]              = an array of functions 'a', 'b', 'c'
  * [default]            = an instance of Stack with 'defaultFn' function
- * [a][b]               = an instance of Stack with function 'a' and a next [b]
+ * [a[b]]               = an instance of Stack with function 'a' and a next [b]
  * [a[b[c]]]            = an instance of Stack with the head [a] and tail [c]
  * {x}                  = some value x
  * [{x},{y}]            = an array of values {x} and {y}
