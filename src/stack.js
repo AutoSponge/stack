@@ -67,7 +67,7 @@
     };
     /**
      * insert
-     * [a].insert(c) => [a[c]].insert(b) => [a[b[c]]] // [a[b[c]]]
+     * [a].insert(c) => [a[c]] // [c]
      * @param fn
      * @returns {Stack}
      */
@@ -100,7 +100,7 @@
     });
     /**
      * priorFn
-     * [a[b[c]]].priorNext(b) // [a]
+     * [a[b[c]]].priorFn(b) // [a]
      * @param fn
      * @returns {Stack|undefined}
      */
