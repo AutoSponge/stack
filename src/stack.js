@@ -327,8 +327,12 @@
     Stack.mung("push", "of")
         .mung("push", "after")
         .mung("insert", "to")
-        .mung("insert", "compose")
-        .mung("insert", "before");
+        .mung("insert", "compose");
+        //.mung("insert", "before"); before already used, aop-style, should add after in the same vein
+        //insert, push, etc. operations should take Stack; insertFn, pushFn, etc. should take Fn
+        //need a way to name and index stacks for reporting/debugging/graphing
+        //setup tests for alternate grammars
+        //add branching logic (probably limited by the stack limits on # of branches)
 
 //        .mung("isNext", "follows")
 //        .mung("isFn", "with")
