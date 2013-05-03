@@ -33,6 +33,16 @@
             return bounce;
         };
     }
+    function makeRecursive(matcher, transformer) {
+        return recur(function recursing() {
+            var self = this;
+            var args = arguments;
+            return function () {
+                return matcher.apply(self, args) && self ||
+                    self.next && recursing.apply(self.next, transformer ? transformer.apply(this, args) : args);
+            };
+        });
+    }
     /**
      * Stack
      * Stack() => [identity] // [identity]
@@ -94,23 +104,35 @@
      * @param idx
      * @returns {Stack|undefined}
      */
-    Stack.prototype.index = recur(function index(idx) {
-        var self = this;
-        return function () {
-            return !idx ? self : self.next && index.call(self.next, idx - 1);
-        };
+//    Stack.prototype.index = recur(function index(idx) {
+//        var self = this;
+//        return function () {
+//            return !idx ? self : self.next && index.call(self.next, idx - 1);
+//        };
+//    });
+
+    Stack.prototype.index = makeRecursive(function (i) {
+        return i===0;
+    }, function (i) {
+        i--;
+        return arguments;
     });
+
     /**
      * priorNext
      * [a[b[c[d]]]].priorNext([d]) // [b]
      * @param [stack]
      * @returns {Stack|undefined}
      */
-    Stack.prototype.priorNext = recur(function priorNext(stack) {
-        var self = this;
-        return function () {
-            return self.next && self.next.next === stack ? self : self.next && priorNext.call(self.next, stack);
-        };
+//    Stack.prototype.priorNext = recur(function priorNext(stack) {
+//        var self = this;
+//        return function () {
+//            return self.next && self.next.next === stack ? self : self.next && priorNext.call(self.next, stack);
+//        };
+//    });
+
+    Stack.prototype.priorNext = makeRecursive(function (stack) {
+        return this.next && this.next.next === stack;
     });
     /**
      * priorFn
@@ -118,11 +140,15 @@
      * @param fn
      * @returns {Stack|undefined}
      */
-    Stack.prototype.priorFn = recur(function priorFn(fn) {
-        var self = this;
-        return function () {
-            return (self.next && self.next.fn === fn) ? self : self.next && priorFn.call(self.next, fn);
-        };
+//    Stack.prototype.priorFn = recur(function priorFn(fn) {
+//        var self = this;
+//        return function () {
+//            return (self.next && self.next.fn === fn) ? self : self.next && priorFn.call(self.next, fn);
+//        };
+//    });
+
+    Stack.prototype.priorFn = makeRecursive(function (fn) {
+        return this.next && this.next.fn === fn;
     });
     /**
      * isNext
@@ -144,16 +170,18 @@
     };
     /**
      * searchNext
-     * [a[b[c]]].searchNext([c]) // [b]
+     * [a[b[c]]].searchNext([c]) // [b[c]]
      * @param [stack]
      * @returns {Stack|undefined}
      */
-    Stack.prototype.searchNext = recur(function searchNext(stack) {
-        var self = this;
-        return function () {
-            return self.isNext(stack) && self || self.next && searchNext.call(self.next, stack);
-        };
-    });
+//    Stack.prototype.searchNext = recur(function searchNext(stack) {
+//        var self = this;
+//        return function () {
+//            return self.isNext(stack) && self || self.next && searchNext.call(self.next, stack);
+//        };
+//    });
+
+    Stack.prototype.searchNext = makeRecursive(Stack.prototype.isNext);
     /**
      * searchFn
      * [a[b[c]]].searchFn(b) // [b]
@@ -263,6 +291,16 @@
      * @param b
      * @returns {Stack}
      */
+    Stack.prototype.beforeFn = function (a, b) {
+        return (this.searchFn(a || undef) || this).insert(b);
+    };
+    /**
+     * after
+     * [a[b[c]]].after(b, d) => [a[b[d[c]]]] // [b[d[c]]]
+     * @param a
+     * @param b
+     * @returns {Stack}
+     */
     Stack.prototype.before = function (a, b) {
         return (this.searchFn(a || undef) || this).insert(b);
     };
@@ -327,14 +365,8 @@
      * [a[b]].searchNext([b]) =
      */
     Stack.mung("push", "of")
-        .mung("push", "after")
         .mung("insert", "to")
         .mung("insert", "compose");
-        //.mung("insert", "before"); before already used, aop-style, should add after in the same vein
-        //insert, push, etc. operations should take Stack; insertFn, pushFn, etc. should take Fn
-        //need a way to name and index stacks for reporting/debugging/graphing
-        //setup tests for alternate grammars
-        //add branching logic (probably limited by the stack limits on # of branches)
 
 //        .mung("isNext", "follows")
 //        .mung("isFn", "with")
