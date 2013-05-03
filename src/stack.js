@@ -45,10 +45,12 @@
      * @constructor
      */
     function Stack(fn, next) {
+        var arr;
         if (Array.isArray(fn)) {
-            return fn.reduce(function (stack, f) {
+            arr = fn.slice(0);
+            return arr.reduce(function (stack, f) {
                 return stack.push(f);
-            }, new Stack(fn.shift()));
+            }, new Stack(arr.shift()));
         }
         if (!(this instanceof Stack)) {
             return new Stack(fn, next);
