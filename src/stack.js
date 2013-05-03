@@ -7,7 +7,7 @@
  * <action> // <result> = a return value
  * <action> || <result> = the effect of the <action>
  * [a,b,c]              = an array of functions 'a', 'b', 'c'
- * [default]            = an instance of Stack with 'defaultFn' function
+ * [identity]            = an instance of Stack with 'identity' function
  * [a[b]]               = an instance of Stack with function 'a' and a next [b]
  * [a[b[c]]]            = an instance of Stack with the head [a] and tail [c]
  * {x}                  = some value x
@@ -21,7 +21,7 @@
     function makeArray(val) {
         return Array.isArray(val) ? val : val ? [val] : [];
     }
-    function defaultFn() {
+    function identity() {
         return arguments.length > 1 ? arguments : arguments[0];
     }
     function recur(fn) {
@@ -35,9 +35,9 @@
     }
     /**
      * Stack
-     * Stack() => [default] //[default]
-     * Stack(a) => [a] //[a]
-     * Stack([a,b,c]) => [a[b[c]]] // [a[b[c]]]
+     * Stack() => [identity] // [identity]
+     * Stack(a) => [a] // [a]
+     * Stack([a,b,c]) => [c[b[a]]] // [c[b[a]]]
      * Stack(a, [b]) => [a[b]] // [a[b]]
      * @param fn {Function|Array}
      * @param [next {Stack}]
@@ -53,12 +53,24 @@
         if (!(this instanceof Stack)) {
             return new Stack(fn, next);
         }
-        this.fn = fn || defaultFn;
+        this.fn = fn || identity;
         this.next = next || undef;
     }
+
+    /**
+     * mung
+     * @param prop
+     * @param rename
+     * @static
+     * @returns Stack
+     */
+    Stack.mung = function (prop, rename) {
+        this.prototype[rename] = this.prototype[prop];
+        return this;
+    };
     /**
      * push
-     * [a].push(b) => [a[b]].push(c) => [a[b[c]]] // [a[b[c]]]
+     * [a].push(b) => [b[a]].push(c) => [c[b[a]]] // [c[b[a]]]
      * @param fn {Function}
      * @returns {Stack}
      */
@@ -67,7 +79,7 @@
     };
     /**
      * insert
-     * [a].insert(c) => [a[c]] // [c]
+     * [a].insert(b) => [a[b]] // [b].insert(c) => [a[b[c]]] // [c]
      * @param fn
      * @returns {Stack}
      */
@@ -112,7 +124,7 @@
     });
     /**
      * isNext
-     * [a[b]].isNext([b]) //true
+     * [a[b]].isNext([b]) // true
      * @param stack
      * @returns {boolean}
      */
@@ -121,7 +133,7 @@
     };
     /**
      * isFn
-     * [a].isFn(a) //true
+     * [a].isFn(a) // true
      * @param fn
      * @returns {boolean}
      */
@@ -130,7 +142,7 @@
     };
     /**
      * searchNext
-     * [a[b[c]]].searchNext([c]) //[b]
+     * [a[b[c]]].searchNext([c]) // [b]
      * @param [stack]
      * @returns {Stack|undefined}
      */
@@ -142,7 +154,7 @@
     });
     /**
      * searchFn
-     * [a[b[c]]].searchFn(b) //[b]
+     * [a[b[c]]].searchFn(b) // [b]
      * @param fn
      * @returns {Stack|undefined}
      */
@@ -184,8 +196,8 @@
     });
     /**
      * call
-     * [a[b[c]]].call({x}) // a(b(c(x)))
-     * [a[b[c]]].call({x}, ?) // ?.a(?.b(?.c(x)))
+     * [a[b[c]]].call({x}) // c(b(a(x)))
+     * [a[b[c]]].call({x}, ?) // ?.c(?.b(?.a(x)))
      * @param arg
      * @param receiver
      * @returns {*}
@@ -199,8 +211,8 @@
     });
     /**
      * apply
-     * [a[b[c]]].apply([{x},{y},{z}]) // a(b(c(x,y,z)))
-     * [a[b[c]]].apply([{x},{y},{z}], ?) // ?.a(?.b(?.c(x,y,z)))
+     * [a[b[c]]].apply([{x},{y},{z}]) // c(b(a(x,y,z)))
+     * [a[b[c]]].apply([{x},{y},{z}], ?) // ?.c(?.b(?.a(x,y,z)))
      * @param args
      * @param receiver
      * @returns {*}
@@ -305,5 +317,26 @@
                     false;
         };
     });
+    /**
+     * [a].push(b) = [a].after(b) = [a].composedWith(b) => [b[a]] // [b[a]]            t o h      a o b
+     * [a].insert(b) = [a].before(b) = [a].then(b) => [a[b]] // [b]
+     * [a[b]].isNext([b]) = [a[b]].composes([b]) // true
+     * [a].isFn(a) = [a].with(a) = [a].uses(a) // true
+     * [a[b]].searchNext([b]) =
+     */
+    Stack.mung("push", "of")
+        .mung("push", "after")
+        .mung("insert", "to")
+        .mung("insert", "compose")
+        .mung("insert", "before");
+
+//        .mung("isNext", "follows")
+//        .mung("isFn", "with")
+//        .mung("isFn", "uses")
+//        .mung("searchNext", "of")
+//        .mung("searchFn", "using")
+//        .mung("priorNext", "previousActsOn")
+//        .mung("priorFn", "composedWith");
+
     global.Stack = Stack;
 }(this));
