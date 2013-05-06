@@ -18,13 +18,17 @@
  * &&                   = logical and
  */
 (function(global, undef) {
+    function merge(a, b) {
+        Array.prototype.push.apply(a, b);
+        return a;
+    }
     function makeArray(val) {
         return Array.isArray(val) ? val : val ? [val] : [];
     }
     function identity() {
         return arguments.length > 1 ? arguments : arguments[0];
     }
-    function recur(fn) {
+    function trampoline(fn) {
         return function () {
             var bounce = fn.apply(this, arguments);
             while (typeof bounce === "function") {
@@ -33,13 +37,26 @@
             return bounce;
         };
     }
-    function makeRecursive(matcher, transformer) {
-        return recur(function recursing() {
+    function recur(matcher, transformer) {
+        return trampoline(function recurring() {
             var self = this;
             var args = arguments;
             return function () {
                 return matcher.apply(self, args) && self ||
-                    self.next && recursing.apply(self.next, transformer ? transformer.apply(this, args) : args);
+                    self.next && recurring.apply(self.next, transformer ? transformer.apply(this, args) : args);
+            };
+        });
+    }
+    function iterate(action, accumulator, limit) {
+        return trampoline(function iterating() {
+            var self = this;
+            var args = arguments;
+            return function () {
+                var val = action.apply(self, args);
+                if (limit && limit.call(self, val)) {
+                    return val;
+                }
+                return self.next ? iterating.apply(self.next, accumulator ? accumulator.apply(self, merge([val], args)) : args) : val;
             };
         });
     }
@@ -104,14 +121,7 @@
      * @param idx
      * @returns {Stack|undefined}
      */
-//    Stack.prototype.index = recur(function index(idx) {
-//        var self = this;
-//        return function () {
-//            return !idx ? self : self.next && index.call(self.next, idx - 1);
-//        };
-//    });
-
-    Stack.prototype.index = makeRecursive(function (i) {
+    Stack.prototype.index = recur(function (i) {
         return i===0;
     }, function (i) {
         i--;
@@ -124,14 +134,7 @@
      * @param [stack]
      * @returns {Stack|undefined}
      */
-//    Stack.prototype.priorNext = recur(function priorNext(stack) {
-//        var self = this;
-//        return function () {
-//            return self.next && self.next.next === stack ? self : self.next && priorNext.call(self.next, stack);
-//        };
-//    });
-
-    Stack.prototype.priorNext = makeRecursive(function (stack) {
+    Stack.prototype.priorNext = recur(function (stack) {
         return this.next && this.next.next === stack;
     });
     /**
@@ -140,14 +143,7 @@
      * @param fn
      * @returns {Stack|undefined}
      */
-//    Stack.prototype.priorFn = recur(function priorFn(fn) {
-//        var self = this;
-//        return function () {
-//            return (self.next && self.next.fn === fn) ? self : self.next && priorFn.call(self.next, fn);
-//        };
-//    });
-
-    Stack.prototype.priorFn = makeRecursive(function (fn) {
+    Stack.prototype.priorFn = recur(function (fn) {
         return this.next && this.next.fn === fn;
     });
     /**
@@ -157,7 +153,7 @@
      * @returns {boolean}
      */
     Stack.prototype.isNext = function (stack) {
-        return stack === this.next;
+        return this.next === stack;
     };
     /**
      * isFn
@@ -166,7 +162,7 @@
      * @returns {boolean}
      */
     Stack.prototype.isFn = function (fn) {
-        return fn === this.fn;
+        return this.fn === fn;
     };
     /**
      * searchNext
@@ -174,26 +170,14 @@
      * @param [stack]
      * @returns {Stack|undefined}
      */
-//    Stack.prototype.searchNext = recur(function searchNext(stack) {
-//        var self = this;
-//        return function () {
-//            return self.isNext(stack) && self || self.next && searchNext.call(self.next, stack);
-//        };
-//    });
-
-    Stack.prototype.searchNext = makeRecursive(Stack.prototype.isNext);
+    Stack.prototype.searchNext = recur(Stack.prototype.isNext);
     /**
      * searchFn
      * [a[b[c]]].searchFn(b) // [b]
      * @param fn
      * @returns {Stack|undefined}
      */
-    Stack.prototype.searchFn = recur(function searchFn(fn) {
-        var self = this;
-        return function () {
-            return self.isFn(fn) && self || self.next && searchFn.call(self.next, fn);
-        };
-    });
+    Stack.prototype.searchFn = recur(Stack.prototype.isFn);
     /**
      * distribute
      * [a[b[c]]].distribute({x}) || a(x), b(x), c(x)
@@ -202,12 +186,8 @@
      * @param receiver
      * @returns {undefined}
      */
-    Stack.prototype.distribute = recur(function distribute(arg, receiver) {
-        var self = this;
-        return function () {
-            self.fn.call(receiver || self, arg);
-            return self.next && distribute.call(self.next, arg, receiver || self);
-        };
+    Stack.prototype.distribute = iterate(function (arg, receiver) {
+        this.fn.call(receiver || self, arg);
     });
     /**
      * distributeAll
@@ -217,12 +197,8 @@
      * @param receiver
      * @returns {undefined}
      */
-    Stack.prototype.distributeAll = recur(function distributeAll(args, receiver) {
-        var self = this;
-        return function () {
-            self.fn.apply(receiver|| self, args);
-            return self.next && distributeAll.call(self.next, makeArray(args), receiver || self);
-        };
+    Stack.prototype.distributeAll = iterate(function (args, receiver) {
+        this.fn.apply(receiver || self, args);
     });
     /**
      * call
@@ -232,12 +208,10 @@
      * @param receiver
      * @returns {*}
      */
-    Stack.prototype.call = recur(function call(arg, receiver) {
-        var self = this;
-        return function () {
-            var val = self.fn.call(receiver || self, arg);
-            return self.next && call.call(self.next, val, receiver) || val;
-        };
+    Stack.prototype.call = iterate(function (arg, receiver) {
+        return this.fn.call(receiver || this, arg);
+    }, function (val, arg, receiver) {
+        return [val, receiver];
     });
     /**
      * apply
@@ -247,12 +221,10 @@
      * @param receiver
      * @returns {*}
      */
-    Stack.prototype.apply = recur(function apply(args, receiver) {
-        var self = this;
-        return function () {
-            var val = self.fn.apply(receiver|| self, args);
-            return self.next && apply.call(self.next, makeArray(val), receiver) || val;
-        }
+    Stack.prototype.apply = iterate(function (args, receiver) {
+        return this.fn.apply(receiver || this, args);
+    }, function (val, args, receiver) {
+        return [makeArray(val), receiver];
     });
     /**
      * clone
@@ -331,14 +303,10 @@
      * @param receiver
      * @returns {boolean}
      */
-    Stack.prototype.some = recur(function some(arg, receiver) {
-        var self = this;
-        return function () {
-            var val = self.fn.call(receiver || self, arg);
-            return val !== true && !self.next ? false :
-                self.next && val !== true ? some.call(self.next, arg, receiver) :
-                    true;
-        };
+    Stack.prototype.some = iterate(function (arg, receiver) {
+        return this.fn.call(receiver || self, arg);
+    }, null, function (val) {
+        return val;
     });
     /**
      * every
@@ -348,17 +316,13 @@
      * @param receiver
      * @returns {boolean}
      */
-    Stack.prototype.every = recur(function every(arg, receiver) {
-        var self = this;
-        return function () {
-            var val = self.fn.call(receiver || self, arg);
-            return val !== false && !self.next ? true :
-                self.next && val !== false ? every.call(self.next, arg, receiver) :
-                    false;
-        };
+    Stack.prototype.every = iterate(function (arg, receiver) {
+        return this.fn.call(receiver || this, arg);
+    }, null, function (val) {
+        return !val;
     });
     /**
-     * [a].push(b) = [a].after(b) = [a].composedWith(b) => [b[a]] // [b[a]]            t o h      a o b
+     * [a].push(b) = [a].after(b) = [a].composedWith(b) => [b[a]] // [b[a]]
      * [a].insert(b) = [a].before(b) = [a].then(b) => [a[b]] // [b]
      * [a[b]].isNext([b]) = [a[b]].composes([b]) // true
      * [a].isFn(a) = [a].with(a) = [a].uses(a) // true
