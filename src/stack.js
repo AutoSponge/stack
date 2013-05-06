@@ -305,9 +305,7 @@
      */
     Stack.prototype.some = iterate(function (arg, receiver) {
         return this.fn.call(receiver || self, arg);
-    }, null, function (val) {
-        return val;
-    });
+    }, null, identity);
     /**
      * every
      * [a[b[c]]].every() || c() && b() && c() // true|false
