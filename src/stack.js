@@ -25,8 +25,8 @@
     function makeArray(val) {
         return Array.isArray(val) ? val : val ? [val] : [];
     }
-    function identity() {
-        return arguments.length > 1 ? arguments : arguments[0];
+    function identity(val) {
+        return arguments.length > 1 ? arguments : val;
     }
     function trampoline(fn) {
         return function () {
