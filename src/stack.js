@@ -319,7 +319,7 @@
     Stack.prototype.every = iterate(function (arg, receiver) {
         return this.fn.call(receiver || this, arg);
     }, null, function (val) {
-        return !val;
+        return val === false;
     });
     /**
      * [a].push(b) = [a].after(b) = [a].composedWith(b) => [b[a]] // [b[a]]
