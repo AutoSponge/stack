@@ -28,6 +28,12 @@
     function identity(val) {
         return arguments.length > 1 ? arguments : val;
     }
+    function isFalse(val) {
+        return val === false;
+    }
+    function call(arg, receiver) {
+        return this.fn.call(receiver || this, arg);
+    }
     function trampoline(fn) {
         return function () {
             var bounce = fn.apply(this, arguments);
@@ -208,9 +214,7 @@
      * @param receiver
      * @returns {*}
      */
-    Stack.prototype.call = iterate(function (arg, receiver) {
-        return this.fn.call(receiver || this, arg);
-    }, function (val, arg, receiver) {
+    Stack.prototype.call = iterate(call, function (val, arg, receiver) {
         return [val, receiver];
     });
     /**
@@ -303,9 +307,7 @@
      * @param receiver
      * @returns {boolean}
      */
-    Stack.prototype.some = iterate(function (arg, receiver) {
-        return this.fn.call(receiver || self, arg);
-    }, null, identity);
+    Stack.prototype.some = iterate(call, null, identity);
     /**
      * every
      * [a[b[c]]].every() || c() && b() && c() // true|false
@@ -314,11 +316,7 @@
      * @param receiver
      * @returns {boolean}
      */
-    Stack.prototype.every = iterate(function (arg, receiver) {
-        return this.fn.call(receiver || this, arg);
-    }, null, function (val) {
-        return val === false;
-    });
+    Stack.prototype.every = iterate(call, null, isFalse);
     /**
      * [a].push(b) = [a].after(b) = [a].composedWith(b) => [b[a]] // [b[a]]
      * [a].insert(b) = [a].before(b) = [a].then(b) => [a[b]] // [b]
