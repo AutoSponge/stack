@@ -7,7 +7,7 @@
  * <action> // <result> = a return value
  * <action> || <result> = the effect of the <action>
  * [a,b,c]              = an array of functions 'a', 'b', 'c'
- * [identity]            = an instance of Stack with 'identity' function
+ * [identity]           = an instance of Stack with 'identity' function
  * [a[b]]               = an instance of Stack with function 'a' and a next [b]
  * [a[b[c]]]            = an instance of Stack with the head [a] and tail [c]
  * {x}                  = some value x
@@ -98,8 +98,9 @@
      * Stack(a) => [a] // [a]
      * Stack([a,b,c]) => [c[b[a]]] // [c[b[a]]]
      * Stack(a, [b]) => [a[b]] // [a[b]]
-     * @param fn {Function|Array}
-     * @param [next {Stack}]
+     * Stack([a, [b[c]]]) => [b[c[a]]] // [b[c[a]]]
+     * @param fn {function|array}
+     * @param next [{?Stack}]
      * @returns {Stack}
      * @constructor
      */
@@ -117,6 +118,13 @@
         this.fn = fn || identity;
         this.next = next || undef;
     }
+    /**
+     * create
+     * @param {Stack|function}
+     * @static
+     * @returns Stack
+     * @throws TypeError
+     */
     Stack.create = stackable(Stack, identity);
     /**
      * alias
@@ -133,11 +141,11 @@
      * used to identify stack instances
      * @type {boolean}
      */
-    Stack.prototype.isStack = true;
+    Stack.prototype.isStack = true;    
     /**
      * push
      * [a].push(b) => [b[a]].push(c) => [c[b[a]]] // [c[b[a]]]
-     * @param fn {Function}
+     * @param fn {Stack|function}
      * @returns {Stack}
      */
     Stack.prototype.push = stackable(function (fn) {
@@ -149,7 +157,8 @@
     /**
      * insert
      * [a].insert(b) => [a[b]] // [b].insert(c) => [a[b[c]]] // [c]
-     * @param fn
+     * [a].insert([b]) => [a[b]] // [b].insert([c]) => [a[b[c]]] // [c]
+     * @param {Stack|function}
      * @returns {Stack}
      */
     Stack.prototype.insert = stackable(function (fn) {
@@ -161,129 +170,9 @@
         return this;
     });
     /**
-     * index
-     * [a[b[c]]].index(1) // [b]
-     * @param idx
-     * @returns {Stack|undefined}
-     */
-    Stack.prototype.index = recur(function (val) {
-        return val === 0;
-    }, function (val) {
-        return [--val];
-    });
-    /**
-     * composedWith
-     * [a[b[c]]].composedWith(b) // [a]
-     * @param fn
-     * @returns {Stack|undefined}
-     */
-    Stack.prototype.composedWith = recur(function (fn) {
-        return this.next && this.next.fn === fn;
-    });
-    /**
-     * precedes
-     * [a[b]].precedes([b]) // true
-     * @param stack
-     * @returns {boolean}
-     */
-    Stack.prototype.precedes = function (stack) {
-        return this.next === stack;
-    };
-    /**
-     * precedent
-     * [a[b[c]]].precedent([c]) // [b[c]]
-     * @param [stack]
-     * @returns {Stack|undefined}
-     */
-    Stack.prototype.precedent = recur(Stack.prototype.precedes);
-    /**
-     * superPrecedent
-     * [a[b[c[d]]]].superPrecedent([d]) // [b]
-     * @param [stack]
-     * @returns {Stack|undefined}
-     */
-    Stack.prototype.superPrecedent = recur(function (stack) {
-        return this.next && this.next.next === stack;
-    });
-    /**
-     * isFn
-     * [a].isFn(a) // true
-     * @param fn
-     * @returns {boolean}
-     */
-    Stack.prototype.uses = function (fn) {
-        return this.fn === fn;
-    };
-    /**
-     * using
-     * [a[b[c]]].using(b) // [b]
-     * @param fn
-     * @returns {Stack|undefined}
-     */
-    Stack.prototype.using = recur(Stack.prototype.uses);
-    /**
-     * distribute
-     * [a[b[c]]].distribute({x}) || a(x), b(x), c(x)
-     * [a[b[c]]].distribute({x}, ?) || ?.a(x), ?.b(x), ?.c(x)
-     * @param arg
-     * @param receiver
-     * @returns {undefined}
-     */
-    Stack.prototype.distribute = iterate(function (arg, receiver) {
-        this.fn.call(receiver || self, arg);
-    });
-    /**
-     * distributeAll
-     * [a[b[c]]].distribute([{x},{y},{z}]) || a(x,y,z), b(x,y,z), c(x,y,z)
-     * [a[b[c]]].distribute([{x},{y},{z}], ?) || ?.a(x,y,z), ?.b(x,y,z), ?.c(x,y,z)
-     * @param args
-     * @param receiver
-     * @returns {undefined}
-     */
-    Stack.prototype.distributeAll = iterate(function (args, receiver) {
-        this.fn.apply(receiver || self, args);
-    });
-    /**
-     * call
-     * [a[b[c]]].call({x}) // c(b(a(x)))
-     * [a[b[c]]].call({x}, ?) // ?.c(?.b(?.a(x)))
-     * @param arg
-     * @param receiver
-     * @returns {*}
-     */
-    Stack.prototype.call = iterate(call, function (val, arg, receiver) {
-        return [val, receiver];
-    });
-    /**
-     * apply
-     * [a[b[c]]].apply([{x},{y},{z}]) // c(b(a(x,y,z)))
-     * [a[b[c]]].apply([{x},{y},{z}], ?) // ?.c(?.b(?.a(x,y,z)))
-     * @param args
-     * @param receiver
-     * @returns {*}
-     */
-    Stack.prototype.apply = iterate(function (args, receiver) {
-        return this.fn.apply(receiver || this, args);
-    }, function (val, args, receiver) {
-        return [makeArray(val), receiver];
-    });
-    /**
-     * clone
-     * [a[b[c]]].clone() // [a[b[c]]]
-     * [a[b[c]]].clone(d) // [d[b[c]]]
-     * [a[b[c]]].clone(null, [d]) // [a[d]]
-     * [a[b[c]]].clone(d, [e]) // [d[e]]
-     * @param fn
-     * @param next
-     * @returns {Stack}
-     */
-    Stack.prototype.clone = function (fn, next) {
-        return new Stack(fn || this.fn, next || this.next);
-    };
-    /**
      * unshift
      * [a[b]].unshift(c) => [a[b[c]]] // [c]
-     * @param fn
+     * @param fn {Stack|function}
      * @returns {Stack}
      */
     Stack.prototype.unshift = function (fn) {
@@ -292,8 +181,8 @@
     /**
      * insert [a] before [b]
      * [a[b[c]]].before(b, d) => [a[b[d[c]]]] // [b[d[c]]]
-     * @param a
-     * @param b
+     * @param a {?Stack|function}
+     * @param b {?Stack|function}
      * @returns {Stack}
      */
     Stack.prototype.before = stackable(function (a, b) {
@@ -321,6 +210,126 @@
         return this;
     };
     /**
+     * index
+     * [a[b[c]]].index(1) // [b]
+     * @param idx {number}
+     * @returns {?Stack}
+     */
+    Stack.prototype.index = recur(function (val) {
+        return val === 0;
+    }, function (val) {
+        return [--val];
+    });
+    /**
+     * isFn
+     * [a].isFn(a) // true
+     * @param fn {function}
+     * @returns {boolean}
+     */
+    Stack.prototype.uses = function (fn) {
+        return this.fn === fn;
+    };
+    /**
+     * using
+     * [a[b[c]]].using(b) // [b]
+     * @param fn {function}
+     * @returns {?Stack}
+     */
+    Stack.prototype.using = recur(Stack.prototype.uses);
+    /**
+     * composedWith
+     * [a[b[c]]].composedWith(b) // [a]
+     * @param fn {function}
+     * @returns {?Stack}
+     */
+    Stack.prototype.composedWith = recur(function (fn) {
+        return this.next && this.next.fn === fn;
+    });
+    /**
+     * precedes
+     * [a[b]].precedes([b]) // true
+     * @param stack
+     * @returns {boolean}
+     */
+    Stack.prototype.precedes = function (stack) {
+        return this.next === stack;
+    };
+    /**
+     * precedent
+     * [a[b[c]]].precedent([c]) // [b[c]]
+     * @param {?Stack}
+     * @returns {?Stack}
+     */
+    Stack.prototype.precedent = recur(Stack.prototype.precedes);
+    /**
+     * superPrecedent
+     * [a[b[c[d]]]].superPrecedent([d]) // [b]
+     * @param {?Stack}
+     * @returns {?Stack}
+     */
+    Stack.prototype.superPrecedent = recur(function (stack) {
+        return this.next && this.next.next === stack;
+    });
+    /**
+     * distribute
+     * [a[b[c]]].distribute({x}) || a(x), b(x), c(x)
+     * [a[b[c]]].distribute({x}, ?) || ?.a(x), ?.b(x), ?.c(x)
+     * @param arg
+     * @param receiver {object}
+     * @returns {undefined}
+     */
+    Stack.prototype.distribute = iterate(function (arg, receiver) {
+        this.fn.call(receiver || self, arg);
+    });
+    /**
+     * distributeAll
+     * [a[b[c]]].distribute([{x},{y},{z}]) || a(x,y,z), b(x,y,z), c(x,y,z)
+     * [a[b[c]]].distribute([{x},{y},{z}], ?) || ?.a(x,y,z), ?.b(x,y,z), ?.c(x,y,z)
+     * @param args {array}
+     * @param receiver {object}
+     * @returns {undefined}
+     */
+    Stack.prototype.distributeAll = iterate(function (args, receiver) {
+        this.fn.apply(receiver || self, args);
+    });
+    /**
+     * call
+     * [a[b[c]]].call({x}) // c(b(a(x)))
+     * [a[b[c]]].call({x}, ?) // ?.c(?.b(?.a(x)))
+     * @param arg 
+     * @param receiver {object}
+     * @returns {*}
+     */
+    Stack.prototype.call = iterate(call, function (val, arg, receiver) {
+        return [val, receiver];
+    });
+    /**
+     * apply
+     * [a[b[c]]].apply([{x},{y},{z}]) // c(b(a(x,y,z)))
+     * [a[b[c]]].apply([{x},{y},{z}], ?) // ?.c(?.b(?.a(x,y,z)))
+     * @param args {array}
+     * @param receiver {object}
+     * @returns {*}
+     */
+    Stack.prototype.apply = iterate(function (args, receiver) {
+        return this.fn.apply(receiver || this, args);
+    }, function (val, args, receiver) {
+        return [makeArray(val), receiver];
+    });
+    /**
+     * clone
+     * [a[b[c]]].clone() // [a[b[c]]]
+     * [a[b[c]]].clone(d) // [d[b[c]]]
+     * [a[b[c]]].clone(null, [d]) // [a[d]]
+     * [a[b[c]]].clone(d, [e]) // [d[e]]
+     * @param fn {function}
+     * @param next {Stack}
+     * @returns {Stack}
+     */
+    Stack.prototype.clone = function (fn, next) {
+        return new Stack(fn || this.fn, next || this.next);
+    };
+    /**
      * some
      * [a[b[c]]].some() || !c() && !b() && !c() // true|false
      * [a[b[c]]].some({x}) || !c(x) && !b(x) && !c(x) // true|false
@@ -338,10 +347,21 @@
      * @returns {boolean}
      */
     Stack.prototype.every = iterate(call, null, isFalse);
-
+    /**
+     * @borrows push as from
+     */
     Stack.alias("push", "from")
+    /**
+     * @borrows insert as to
+     */
         .alias("insert", "to")
+    /**
+     * @borrows insert as compose
+     */
         .alias("insert", "compose")
+    /**
+     * @borrows precedent as tail
+     */
         .alias("precedent", "tail");
 
     global.Stack = Stack;
