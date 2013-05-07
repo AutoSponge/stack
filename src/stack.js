@@ -122,8 +122,8 @@
      * create
      * @param {Stack|function}
      * @static
-     * @returns Stack
-     * @throws TypeError
+     * @returns {Stack}
+     * @throws {TypeError}
      */
     Stack.create = stackable(Stack, identity);
     /**
@@ -131,13 +131,14 @@
      * @param prop {string}
      * @param rename {string}
      * @static
-     * @returns Stack
+     * @returns {object}
      */
     Stack.alias = function (prop, rename) {
         this.prototype[rename] = this.prototype[prop];
         return this;
     };
     /**
+     * isStack
      * used to identify stack instances
      * @type {boolean}
      */
@@ -147,7 +148,7 @@
      * [a].push(b) => [b[a]].push(c) => [c[b[a]]] // [c[b[a]]]
      * @param fn {Stack|function}
      * @returns {Stack}
-     * @throws TypeError
+     * @throws {TypeError}
      */
     Stack.prototype.push = stackable(function (fn) {
         return new Stack(fn, this);
@@ -161,7 +162,7 @@
      * [a].insert([b]) => [a[b]] // [b].insert([c]) => [a[b[c]]] // [c]
      * @param {Stack|function}
      * @returns {Stack}
-     * @throws TypeError
+     * @throws {TypeError}
      */
     Stack.prototype.insert = stackable(function (fn) {
         return this.next = new Stack(fn, this.next);
@@ -176,17 +177,19 @@
      * [a[b]].unshift(c) => [a[b[c]]] // [c]
      * @param fn {Stack|function}
      * @returns {Stack}
+     * @throws {TypeError}
      */
     Stack.prototype.unshift = function (fn) {
         return this.precedent().insert(fn);
     };
     /**
+     * before
      * insert [a] before [b]
      * [a[b[c]]].before(b, d) => [a[b[d[c]]]] // [b[d[c]]]
      * @param a {?Stack|function}
      * @param b {?Stack|function}
      * @returns {Stack}
-     * @throws TypeError
+     * @throws {TypeError}
      */
     Stack.prototype.before = stackable(function (a, b) {
         return (this.using(a || undef) || this).insert(b);
@@ -205,6 +208,7 @@
         return removed;
     };
     /**
+     * pop
      * [a[b[c]]].pop() => [a], [b[c]] // [a]
      * @returns {Stack}
      */
@@ -224,8 +228,8 @@
         return [--val];
     });
     /**
-     * isFn
-     * [a].isFn(a) // true
+     * uses
+     * [a].uses(a) // true
      * @param fn {function}
      * @returns {boolean}
      */
@@ -251,7 +255,7 @@
     /**
      * precedes
      * [a[b]].precedes([b]) // true
-     * @param stack {Stack}
+     * @param stack {?Stack}
      * @returns {boolean}
      */
     Stack.prototype.precedes = function (stack) {
@@ -286,8 +290,8 @@
     });
     /**
      * distributeAll
-     * [a[b[c]]].distribute([{x},{y},{z}]) || a(x,y,z), b(x,y,z), c(x,y,z)
-     * [a[b[c]]].distribute([{x},{y},{z}], ?) || ?.a(x,y,z), ?.b(x,y,z), ?.c(x,y,z)
+     * [a[b[c]]].distributeAll([{x},{y},{z}]) || a(x,y,z), b(x,y,z), c(x,y,z)
+     * [a[b[c]]].distributeAll([{x},{y},{z}], ?) || ?.a(x,y,z), ?.b(x,y,z), ?.c(x,y,z)
      * @param args {array}
      * @param receiver {object}
      * @returns {undefined}
