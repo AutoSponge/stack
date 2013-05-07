@@ -1,5 +1,5 @@
 /**
- * Stack
+ * Stack - an implementation of singly-linked lists
  * notation key
  * a                    = function 'a'
  * [a]                  = an instance of Stack with the function 'a'
@@ -17,10 +17,29 @@
  * ?                    = an object
  * &&                   = logical and
  */
+
+/**
+ * @lends Stack
+ */
 (function(global, undef) {
+    "use strict";
+    function error() {
+        throw new TypeError("Argument must be a function or Stack.");
+    }
     function merge(a, b) {
         Array.prototype.push.apply(a, b);
         return a;
+    }
+    function stackable(fn, stack) {
+        return function (a, b) {
+            return !a ?
+                fn.apply(this, [identity, b]) :
+                    typeof a === "function" ?
+                    fn.apply(this, arguments) :
+                    a.isStack ?
+                        stack.apply(this, arguments) :
+                        error();
+        };
     }
     function makeArray(val) {
         return Array.isArray(val) ? val : val ? [val] : [];
@@ -49,7 +68,9 @@
             var args = arguments;
             return function () {
                 return matcher.apply(self, args) && self ||
-                    self.next && recurring.apply(self.next, transformer ? transformer.apply(this, args) : args);
+                    self.next && recurring.apply(self.next, transformer ?
+                        transformer.apply(this, args) :
+                        args);
             };
         });
     }
@@ -62,10 +83,15 @@
                 if (limit && limit.call(self, val)) {
                     return val;
                 }
-                return self.next ? iterating.apply(self.next, accumulator ? accumulator.apply(self, merge([val], args)) : args) : val;
+                return self.next ?
+                    iterating.apply(self.next, accumulator ?
+                        accumulator.apply(self, merge([val], args)) :
+                        args) :
+                    val;
             };
         });
     }
+
     /**
      * Stack
      * Stack() => [identity] // [identity]
@@ -83,7 +109,7 @@
             arr = fn.slice(0);
             return arr.reduce(function (stack, f) {
                 return stack.push(f);
-            }, new Stack(arr.shift()));
+            }, Stack.create(arr.shift()));
         }
         if (!(this instanceof Stack)) {
             return new Stack(fn, next);
@@ -91,99 +117,110 @@
         this.fn = fn || identity;
         this.next = next || undef;
     }
-
+    Stack.create = stackable(Stack, identity);
     /**
-     * mung
+     * alias
      * @param prop
      * @param rename
      * @static
      * @returns Stack
      */
-    Stack.mung = function (prop, rename) {
+    Stack.alias = function (prop, rename) {
         this.prototype[rename] = this.prototype[prop];
         return this;
     };
+    /**
+     * used to identify stack instances
+     * @type {boolean}
+     */
+    Stack.prototype.isStack = true;
     /**
      * push
      * [a].push(b) => [b[a]].push(c) => [c[b[a]]] // [c[b[a]]]
      * @param fn {Function}
      * @returns {Stack}
      */
-    Stack.prototype.push = function(fn) {
+    Stack.prototype.push = stackable(function (fn) {
         return new Stack(fn, this);
-    };
+    }, function (stack) {
+        stack.precedent().next = this;
+        return stack;
+    });
     /**
      * insert
      * [a].insert(b) => [a[b]] // [b].insert(c) => [a[b[c]]] // [c]
      * @param fn
      * @returns {Stack}
      */
-    Stack.prototype.insert = function (fn) {
+    Stack.prototype.insert = stackable(function (fn) {
         return this.next = new Stack(fn, this.next);
-    };
+    }, function (stack) {
+        var next = this.next;
+        this.next = stack;
+        stack.next = next;
+        return this;
+    });
     /**
      * index
      * [a[b[c]]].index(1) // [b]
      * @param idx
      * @returns {Stack|undefined}
      */
-    Stack.prototype.index = recur(function (i) {
-        return i===0;
-    }, function (i) {
-        i--;
-        return arguments;
-    });
-
-    /**
-     * priorNext
-     * [a[b[c[d]]]].priorNext([d]) // [b]
-     * @param [stack]
-     * @returns {Stack|undefined}
-     */
-    Stack.prototype.priorNext = recur(function (stack) {
-        return this.next && this.next.next === stack;
+    Stack.prototype.index = recur(function (val) {
+        return val === 0;
+    }, function (val) {
+        return [--val];
     });
     /**
-     * priorFn
-     * [a[b[c]]].priorFn(b) // [a]
+     * composedWith
+     * [a[b[c]]].composedWith(b) // [a]
      * @param fn
      * @returns {Stack|undefined}
      */
-    Stack.prototype.priorFn = recur(function (fn) {
+    Stack.prototype.composedWith = recur(function (fn) {
         return this.next && this.next.fn === fn;
     });
     /**
-     * isNext
-     * [a[b]].isNext([b]) // true
+     * precedes
+     * [a[b]].precedes([b]) // true
      * @param stack
      * @returns {boolean}
      */
-    Stack.prototype.isNext = function (stack) {
+    Stack.prototype.precedes = function (stack) {
         return this.next === stack;
     };
+    /**
+     * precedent
+     * [a[b[c]]].precedent([c]) // [b[c]]
+     * @param [stack]
+     * @returns {Stack|undefined}
+     */
+    Stack.prototype.precedent = recur(Stack.prototype.precedes);
+    /**
+     * superPrecedent
+     * [a[b[c[d]]]].superPrecedent([d]) // [b]
+     * @param [stack]
+     * @returns {Stack|undefined}
+     */
+    Stack.prototype.superPrecedent = recur(function (stack) {
+        return this.next && this.next.next === stack;
+    });
     /**
      * isFn
      * [a].isFn(a) // true
      * @param fn
      * @returns {boolean}
      */
-    Stack.prototype.isFn = function (fn) {
+    Stack.prototype.uses = function (fn) {
         return this.fn === fn;
     };
     /**
-     * searchNext
-     * [a[b[c]]].searchNext([c]) // [b[c]]
-     * @param [stack]
-     * @returns {Stack|undefined}
-     */
-    Stack.prototype.searchNext = recur(Stack.prototype.isNext);
-    /**
-     * searchFn
-     * [a[b[c]]].searchFn(b) // [b]
+     * using
+     * [a[b[c]]].using(b) // [b]
      * @param fn
      * @returns {Stack|undefined}
      */
-    Stack.prototype.searchFn = recur(Stack.prototype.isFn);
+    Stack.prototype.using = recur(Stack.prototype.uses);
     /**
      * distribute
      * [a[b[c]]].distribute({x}) || a(x), b(x), c(x)
@@ -244,49 +281,33 @@
         return new Stack(fn || this.fn, next || this.next);
     };
     /**
-     * tail
-     * [a[b[c]]].tail() // [c]
-     * @returns {Stack|undefined}
-     */
-    Stack.prototype.tail = function () {
-        return this.searchNext();
-    };
-    /**
      * unshift
      * [a[b]].unshift(c) => [a[b[c]]] // [c]
      * @param fn
      * @returns {Stack}
      */
     Stack.prototype.unshift = function (fn) {
-        return this.tail().insert(fn);
+        return this.precedent().insert(fn);
     };
     /**
-     * before
-     * [a[b[c]]].before(b, d) => [a[d[b[c]]]] // [d[b[c]]]
+     * insert [a] before [b]
+     * [a[b[c]]].before(b, d) => [a[b[d[c]]]] // [b[d[c]]]
      * @param a
      * @param b
      * @returns {Stack}
      */
-    Stack.prototype.beforeFn = function (a, b) {
-        return (this.searchFn(a || undef) || this).insert(b);
-    };
-    /**
-     * after
-     * [a[b[c]]].after(b, d) => [a[b[d[c]]]] // [b[d[c]]]
-     * @param a
-     * @param b
-     * @returns {Stack}
-     */
-    Stack.prototype.before = function (a, b) {
-        return (this.searchFn(a || undef) || this).insert(b);
-    };
+    Stack.prototype.before = stackable(function (a, b) {
+        return (this.using(a || undef) || this).insert(b);
+    }, function (a, b) {
+        return (this.precedent(a || undef) || this).insert(b);
+    });
     /**
      * shift
      * [a[b[c]]].shift() => [a[b]] // [c]
      * @returns {Stack}
      */
     Stack.prototype.shift = function () {
-        var p = this.priorNext();
+        var p = this.superPrecedent();
         var removed = p.next;
         p.next = undef;
         return removed;
@@ -317,24 +338,11 @@
      * @returns {boolean}
      */
     Stack.prototype.every = iterate(call, null, isFalse);
-    /**
-     * [a].push(b) = [a].after(b) = [a].composedWith(b) => [b[a]] // [b[a]]
-     * [a].insert(b) = [a].before(b) = [a].then(b) => [a[b]] // [b]
-     * [a[b]].isNext([b]) = [a[b]].composes([b]) // true
-     * [a].isFn(a) = [a].with(a) = [a].uses(a) // true
-     * [a[b]].searchNext([b]) =
-     */
-    Stack.mung("push", "of")
-        .mung("insert", "to")
-        .mung("insert", "compose");
 
-//        .mung("isNext", "follows")
-//        .mung("isFn", "with")
-//        .mung("isFn", "uses")
-//        .mung("searchNext", "of")
-//        .mung("searchFn", "using")
-//        .mung("priorNext", "previousActsOn")
-//        .mung("priorFn", "composedWith");
+    Stack.alias("push", "from")
+        .alias("insert", "to")
+        .alias("insert", "compose")
+        .alias("precedent", "tail");
 
     global.Stack = Stack;
 }(this));
