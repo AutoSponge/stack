@@ -34,7 +34,7 @@
         return function (a, b) {
             return !a ?
                 fn.apply(this, [identity, b]) :
-                    typeof a === "function" ?
+                typeof a === "function" ?
                     fn.apply(this, arguments) :
                     a.isStack ?
                         stack.apply(this, arguments) :
@@ -128,8 +128,8 @@
     Stack.create = stackable(Stack, identity);
     /**
      * alias
-     * @param prop
-     * @param rename
+     * @param prop {string}
+     * @param rename {string}
      * @static
      * @returns Stack
      */
@@ -248,7 +248,7 @@
     /**
      * precedes
      * [a[b]].precedes([b]) // true
-     * @param stack
+     * @param stack {Stack}
      * @returns {boolean}
      */
     Stack.prototype.precedes = function (stack) {
@@ -274,7 +274,7 @@
      * distribute
      * [a[b[c]]].distribute({x}) || a(x), b(x), c(x)
      * [a[b[c]]].distribute({x}, ?) || ?.a(x), ?.b(x), ?.c(x)
-     * @param arg
+     * @param arg {*}
      * @param receiver {object}
      * @returns {undefined}
      */
@@ -296,7 +296,7 @@
      * call
      * [a[b[c]]].call({x}) // c(b(a(x)))
      * [a[b[c]]].call({x}, ?) // ?.c(?.b(?.a(x)))
-     * @param arg 
+     * @param arg {*} 
      * @param receiver {object}
      * @returns {*}
      */
@@ -333,8 +333,8 @@
      * some
      * [a[b[c]]].some() || !c() && !b() && !c() // true|false
      * [a[b[c]]].some({x}) || !c(x) && !b(x) && !c(x) // true|false
-     * @param arg
-     * @param receiver
+     * @param arg {*}
+     * @param receiver {object}
      * @returns {boolean}
      */
     Stack.prototype.some = iterate(call, null, identity);
@@ -342,8 +342,8 @@
      * every
      * [a[b[c]]].every() || c() && b() && c() // true|false
      * [a[b[c]]].every({x}) || c(x) && b(x) && c(x) // true|false
-     * @param arg
-     * @param receiver
+     * @param arg {*}
+     * @param receiver {object}
      * @returns {boolean}
      */
     Stack.prototype.every = iterate(call, null, isFalse);
