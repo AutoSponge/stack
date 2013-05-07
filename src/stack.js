@@ -147,6 +147,7 @@
      * [a].push(b) => [b[a]].push(c) => [c[b[a]]] // [c[b[a]]]
      * @param fn {Stack|function}
      * @returns {Stack}
+     * @throws TypeError
      */
     Stack.prototype.push = stackable(function (fn) {
         return new Stack(fn, this);
@@ -160,6 +161,7 @@
      * [a].insert([b]) => [a[b]] // [b].insert([c]) => [a[b[c]]] // [c]
      * @param {Stack|function}
      * @returns {Stack}
+     * @throws TypeError
      */
     Stack.prototype.insert = stackable(function (fn) {
         return this.next = new Stack(fn, this.next);
@@ -184,6 +186,7 @@
      * @param a {?Stack|function}
      * @param b {?Stack|function}
      * @returns {Stack}
+     * @throws TypeError
      */
     Stack.prototype.before = stackable(function (a, b) {
         return (this.using(a || undef) || this).insert(b);
