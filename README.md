@@ -34,9 +34,9 @@ StackInstance
 Stack
 ::= 'new'? 'Stack(' (Function ( StackInstance |) | ( '[' ( Function | StackInstance )* ']' ) ) ')' StackInstance
 
-Stack.call
-::= StackInstance '.call(' '*' ( ',' Object )? ')' 
+call
+::= StackInstance '.call(' '*' ( ',' Object )? ')' ( call )* '*'
 
-Stack.apply
-::= StackInstance '.apply(' '[' '*'* ']' ( ',' Object )? ')' 
+apply
+::= StackInstance '.apply(' '[' '*'* ']' ( ',' Object )? ')' ( apply )* '*' 
 </pre>
