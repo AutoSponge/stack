@@ -28,15 +28,15 @@ TODO
 * create worker implementation (needs async call/apply)
 
 <pre>
-Stack
-::= 'new'? 'Stack(' (Function ( stack |) | ( '[' ( Function | stack )* ']' ) ) ')' 'stack'
+StackInstance
+::= head-tail/head ( precedent? | ( stack* | )? superPrecedent  precedent | )? tail
 
-StackProcess
-::= head/head ( precedent? | ( stack* | )? superPrecedent  precedent | )? tail
+Stack
+::= 'new'? 'Stack(' (Function ( stack |) | ( '[' ( Function | stack )* ']' ) ) ')' StackInstance
 
 Stack.call
-::= head '.call(' '*' ( ',' Object )? ')' StackProcess '*'
+::= head '.call(' '*' ( ',' Object )? ')' 
 
 Stack.apply
-::= head '.apply(' '[' '*'* ']' ( ',' Object )? ')' StackProcess  '*'
+::= head '.apply(' '[' '*'* ']' ( ',' Object )? ')' 
 </pre>
