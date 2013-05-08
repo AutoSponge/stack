@@ -32,11 +32,11 @@ StackInstance
 ::= head-tail/head ( precedent? | ( stack* | )? superPrecedent  precedent | )? tail
 
 Stack
-::= 'new'? 'Stack(' (Function ( stack |) | ( '[' ( Function | stack )* ']' ) ) ')' StackInstance
+::= 'new'? 'Stack(' (Function ( StackInstance |) | ( '[' ( Function | StackInstance )* ']' ) ) ')' StackInstance
 
 Stack.call
-::= head '.call(' '*' ( ',' Object )? ')' 
+::= StackInstance '.call(' '*' ( ',' Object )? ')' 
 
 Stack.apply
-::= head '.apply(' '[' '*'* ']' ( ',' Object )? ')' 
+::= StackInstance '.apply(' '[' '*'* ']' ( ',' Object )? ')' 
 </pre>
