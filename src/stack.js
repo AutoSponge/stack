@@ -285,9 +285,7 @@
      * @param receiver {object}
      * @returns {undefined}
      */
-    Stack.prototype.distribute = iterate(function (arg, receiver) {
-        this.fn.call(receiver || self, arg);
-    });
+    Stack.prototype.distribute = iterate(call);
     /**
      * distributeAll
      * [a[b[c]]].distributeAll([{x},{y},{z}]) || a(x,y,z), b(x,y,z), c(x,y,z)
