@@ -53,6 +53,9 @@
     function call(arg, receiver) {
         return this.fn.call(receiver || this, arg);
     }
+    function apply(args, receiver) {
+        return this.fn.apply(receiver || this, args);
+    }
     function trampoline(fn) {
         return function () {
             var bounce = fn.apply(this, arguments);
@@ -281,9 +284,9 @@
      * distribute
      * [a[b[c]]].distribute({x}) || a(x), b(x), c(x)
      * [a[b[c]]].distribute({x}, ?) || ?.a(x), ?.b(x), ?.c(x)
-     * @param arg {*}
+     * @param {*}
      * @param receiver {object}
-     * @returns {undefined}
+     * @returns {*}
      */
     Stack.prototype.distribute = iterate(call);
     /**
@@ -316,9 +319,7 @@
      * @param receiver {object}
      * @returns {*}
      */
-    Stack.prototype.apply = iterate(function (args, receiver) {
-        return this.fn.apply(receiver || this, args);
-    }, function (val, args, receiver) {
+    Stack.prototype.apply = iterate(apply, function (val, args, receiver) {
         return [makeArray(val), receiver];
     });
     /**
