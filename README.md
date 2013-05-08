@@ -26,3 +26,17 @@ TODO
 ====
 * create branching logic (CPS?)
 * create worker implementation (needs async call/apply)
+
+`
+Stack
+::= 'new'? 'Stack(' (Function ( stack |) | ( '[' ( Function | stack )* ']' ) ) ')' 'stack'
+
+StackProcess
+::= head/head ( precedent? | ( stack* | )? superPrecedent  precedent | )? tail
+
+Stack.call
+::= head '.call(' '*' ( ',' Object )? ')' StackProcess '*'
+
+Stack.apply
+::= head '.apply(' '[' '*'* ']' ( ',' Object )? ')' StackProcess  '*'
+`
