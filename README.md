@@ -27,7 +27,7 @@ TODO
 * create branching logic (CPS?)
 * create worker implementation (needs async call/apply)
 
-`
+<pre>
 Stack
 ::= 'new'? 'Stack(' (Function ( stack |) | ( '[' ( Function | stack )* ']' ) ) ')' 'stack'
 
@@ -39,4 +39,4 @@ Stack.call
 
 Stack.apply
 ::= head '.apply(' '[' '*'* ']' ( ',' Object )? ')' StackProcess  '*'
-`
+</pre>
