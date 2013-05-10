@@ -297,9 +297,7 @@
      * @param receiver {object}
      * @returns {undefined}
      */
-    Stack.prototype.distributeAll = iterate(function (args, receiver) {
-        this.fn.apply(receiver || self, args);
-    });
+    Stack.prototype.distributeAll = iterate(apply);
     /**
      * call
      * [a[b[c]]].call({x}) // c(b(a(x)))
