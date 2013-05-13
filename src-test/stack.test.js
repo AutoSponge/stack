@@ -57,7 +57,7 @@ test("call", function () {
     function c(val) {
         return "value is " + val;
     }
-    var stack = Stack(add1);
+    stack = Stack(add1);
     function decide(val) {
         return val > 5000 ? Stack(c) : stack;
     }
