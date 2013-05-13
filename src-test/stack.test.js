@@ -1,4 +1,4 @@
-test("Stack", function () {
+test("Stack constructor", function () {
     expect(8);
     var stack = new Stack();
     ok(stack instanceof Stack);
@@ -31,7 +31,7 @@ test("Stack", function () {
     ok(Stack([closeEmote, highFive, openEmote, greetStack]).call("Dave") === "Hi, Dave-O!/*gives a high five*/");
 });
 test("call", function () {
-    expect(1);
+    expect(3);
     function a(val) {
         return "a" + val;
     }
@@ -45,6 +45,12 @@ test("call", function () {
     var stackB = new Stack(b, stackA);
     var stackC = new Stack(c, stackB);
     ok(stackC.call(1) === "abc1");
+    function decide(val) {
+        return val === "c1" ? Stack(a) : Stack(b);
+    }
+    var stack = Stack([decide,c]);
+    ok(stack.call(1) === "ac1");
+    ok(stack.call(0) === "bc0");
 });
 test("push a function", function() {
     expect(6);
@@ -126,7 +132,7 @@ test("apply", function() {
             return a + b;
         });
     }
-    expect(3);
+    expect(5);
     ok(Stack(sum).push(flatten).apply([[1],[2],[3]]) === 6);
     ok(Stack([sum, doubleAll, flatten]).apply([[1],[2],[3]]) === 12);
     function sumThis() {
@@ -138,6 +144,11 @@ test("apply", function() {
     }
     var obj = {seed: 1};
     ok(Stack([sumThis, doubleAll, flatten]).apply([[1],[2],[3]], obj) === 14);
+    function decide(args, obj) {
+        return arguments.length > 2 ? Stack(doubleAll, Stack(sumThis)) : [args, obj];
+    }
+    ok(Stack([sumThis, decide, flatten]).apply([[1],[2],[3]], obj) === 14);
+    ok(Stack([sumThis, decide, flatten]).apply([[1],[2]], obj) === 4);
 });
 test("insert can stack a function", function () {
     function a(data) {
@@ -326,7 +337,7 @@ test("distribute", function () {
         cVal += (val + 2 + (this.bonus || 0));
     }
     var stack = Stack([a, b, c]);
-    expect(7);
+    expect(13);
     ok(typeof stack.distribute(1) === "undefined");
     ok(aVal === 1);
     ok(bVal === 2);
@@ -338,6 +349,21 @@ test("distribute", function () {
     ok(aVal === 2);
     ok(bVal === 3);
     ok(cVal === 4);
+    function decide(val) {
+        return val === 0 ? Stack(b) : val;
+    }
+    stack = Stack([a, decide, c]);
+    aVal = 0;
+    bVal = 0;
+    cVal = 0;
+    stack.distribute(1, {bonus: 1});
+    ok(aVal === 2);
+    ok(bVal === 0);
+    ok(cVal === 4);
+    stack.distribute(0);
+    ok(aVal = 2);
+    ok(bVal = 1);
+    ok(cVal = 2);
 });
 test("distributeAll", function () {
     var aVal = 0;
@@ -353,7 +379,7 @@ test("distributeAll", function () {
         cVal += (z + 2 + (this.bonus || 0));
     }
     var stack = Stack([a, b, c]);
-    expect(7);
+    expect(10);
     ok(typeof stack.distributeAll([1, 2, 3]) === "undefined");
     ok(aVal === 1);
     ok(bVal === 3);
@@ -365,6 +391,17 @@ test("distributeAll", function () {
     ok(aVal === 2);
     ok(bVal === 4);
     ok(cVal === 6);
+    function decide() {
+        return this.bonus === 1 ? Stack(a) : Stack(b);
+    }
+    aVal = 0;
+    bVal = 0;
+    cVal = 0;
+    stack = Stack([decide, c]);
+    stack.distributeAll([1, 2, 3], {bonus: 0});
+    ok(aVal === 0);
+    ok(bVal === 3);
+    ok(cVal === 5);
 });
 test("before", function () {
     function a(data) {
@@ -421,6 +458,7 @@ test("some", function () {
     allfalse = Stack([isTest, isTwo, isOdd]);
     ok(allfalse.some(0) === false);
     ok(allfalse.some(1) === true);
+    //todo branching
 });
 test("every", function () {
     var truecount = 0;
@@ -460,4 +498,5 @@ test("every", function () {
     ok(alltrue.every(1, obj) === true);
     obj.test = 2;
     ok(alltrue.every(1, obj) === false);
+    //todo branching
 });

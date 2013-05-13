@@ -86,6 +86,9 @@
                 if (limit && limit.call(self, val)) {
                     return val;
                 }
+                if (val && val.isStack) {
+                    return iterating.apply(val, args);
+                }
                 return self.next ?
                     iterating.apply(self.next, accumulator ?
                         accumulator.apply(self, merge([val], args)) :
@@ -145,7 +148,20 @@
      * used to identify stack instances
      * @type {boolean}
      */
-    Stack.prototype.isStack = true;    
+    Stack.prototype.isStack = true;
+    /**
+     * clone
+     * [a[b[c]]].clone() // [a[b[c]]]
+     * [a[b[c]]].clone(d) // [d[b[c]]]
+     * [a[b[c]]].clone(null, [d]) // [a[d]]
+     * [a[b[c]]].clone(d, [e]) // [d[e]]
+     * @param fn {function}
+     * @param next {Stack}
+     * @returns {Stack}
+     */
+    Stack.prototype.clone = function (fn, next) {
+        return new Stack(fn || this.fn, next || this.next);
+    };
     /**
      * push
      * [a].push(b) => [b[a]].push(c) => [c[b[a]]] // [c[b[a]]]
@@ -320,19 +336,6 @@
     Stack.prototype.apply = iterate(apply, function (val, args, receiver) {
         return [makeArray(val), receiver];
     });
-    /**
-     * clone
-     * [a[b[c]]].clone() // [a[b[c]]]
-     * [a[b[c]]].clone(d) // [d[b[c]]]
-     * [a[b[c]]].clone(null, [d]) // [a[d]]
-     * [a[b[c]]].clone(d, [e]) // [d[e]]
-     * @param fn {function}
-     * @param next {Stack}
-     * @returns {Stack}
-     */
-    Stack.prototype.clone = function (fn, next) {
-        return new Stack(fn || this.fn, next || this.next);
-    };
     /**
      * some
      * [a[b[c]]].some() || !c() && !b() && !c() // true|false
