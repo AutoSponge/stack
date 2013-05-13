@@ -31,7 +31,7 @@ test("Stack constructor", function () {
     ok(Stack([closeEmote, highFive, openEmote, greetStack]).call("Dave") === "Hi, Dave-O!/*gives a high five*/");
 });
 test("call", function () {
-    expect(3);
+    expect(4);
     function a(val) {
         return "a" + val;
     }
@@ -51,6 +51,18 @@ test("call", function () {
     var stack = Stack([decide,c]);
     ok(stack.call(1) === "ac1");
     ok(stack.call(0) === "bc0");
+    function add1(val) {
+    return val + 1;
+    }
+    function c(val) {
+        return "value is " + val;
+    }
+    var stack = Stack(add1);
+    function decide(val) {
+        return val > 5000 ? Stack(c) : stack;
+    }
+    stack.insert(decide);
+    ok("recursive decisions will not overflow", stack.call(0), "val is 5001");
 });
 test("push a function", function() {
     expect(6);
