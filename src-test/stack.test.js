@@ -62,7 +62,7 @@ test("call", function () {
         return val > 5000 ? Stack(ident) : stack;
     }
     stack.insert(decideAdd);
-    ok("recursive decitions will not overflow", stack.call(0) === "value is 5001");
+    ok("recursive decitions should not overflow", stack.call(0) === "value is 5001");
 });
 test("push a function", function() {
     expect(6);
