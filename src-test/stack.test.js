@@ -54,14 +54,14 @@ test("call", function () {
     function add1(val) {
         return val + 1;
     }
-    function c(val) {
+    function ident(val) {
         return "value is " + val;
     }
     stack = Stack(add1);
-    function decide(val) {
-        return val > 5000 ? Stack(c) : stack;
+    function decideAdd(val) {
+        return val > 5000 ? Stack(ident) : stack;
     }
-    stack.insert(decide);
+    stack.insert(decideAdd);
     ok(stack.call(0) === "value is 5001");
 });
 test("push a function", function() {
