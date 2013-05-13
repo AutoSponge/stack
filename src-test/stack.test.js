@@ -51,6 +51,18 @@ test("call", function () {
     var stack = Stack([decide,c]);
     ok(stack.call(1) === "ac1");
     ok(stack.call(0) === "bc0");
+    function add1(val) {
+        return val + 1;
+    }
+    function c(val) {
+        return "value is " + val;
+    }
+    stack = Stack(add1);
+    function decide(val) {
+        return val > 5000 ? Stack(c) : stack;
+    }
+    stack.insert(decide);
+    ok(stack.call(0) === "value is 5001");
 });
 test("push a function", function() {
     expect(6);
