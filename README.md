@@ -24,8 +24,8 @@ Possible uses:
 
 TODO
 ====
-* create branching logic (CPS?)
-* create worker implementation (needs async call/apply)
+* document branching logic
+* test and document continuation objects
 
 <pre>
 StackInstance
