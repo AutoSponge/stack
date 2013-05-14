@@ -97,11 +97,11 @@
                 if (val && val.isStack) {
                     return iterating.apply(val, args);
                 }
-                /*if (val === Stack.pause) {
+                if (val === Stack.pause) {
                     return new Continuation(function () {
                             return iterating.apply(this, arguments);
                         }, self.next, accumulator ? accumulator.apply(self, args) : args);
-                }*/
+                }
                 return self.next ?
                     iterating.apply(self.next, accumulator ?
                         accumulator.apply(self, merge([val], args)) :
