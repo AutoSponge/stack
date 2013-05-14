@@ -77,6 +77,14 @@
             };
         });
     }
+    function Continuation(fn, next, args) {
+        this.fn = fn;
+        this.next = next;
+        this.args = args;
+    }
+    Continuation.prototype.invoke = function (){
+        return trampoline(this.fn).apply(this.next, this.args);
+    };
     function iterate(action, accumulator, limit) {
         return trampoline(function iterating() {
             var self = this;
@@ -88,6 +96,11 @@
                 }
                 if (val && val.isStack) {
                     return iterating.apply(val, args);
+                }
+                if (val === Stack.pause) {
+                    return new Continuation(function () {
+                            return iterating.apply(this, arguments);
+                        }, self.next, accumulator ? accumulator.apply(self, args) : args);
                 }
                 return self.next ?
                     iterating.apply(self.next, accumulator ?
