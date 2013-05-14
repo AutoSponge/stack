@@ -137,6 +137,7 @@
         this.fn = fn || identity;
         this.next = next || undef;
     }
+    Stack.pause = {};
     /**
      * create
      * @param {Stack|function}
