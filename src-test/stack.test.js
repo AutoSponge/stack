@@ -1,23 +1,128 @@
-test("Stack constructor", function () {
-    expect(8);
+test("Stack is a function", function () {
+    ok(typeof Stack === "function");
+});
+test("Stack is a constructor", function () {
     var stack = new Stack();
     ok(stack instanceof Stack);
-    ok(typeof stack.fn === "function");
-    ok(typeof stack.next === "undefined");
-    stack = Stack();
+});
+test("Stack will instantiate without the 'new' keyword", function () {
+    var stack = Stack();
     ok(stack instanceof Stack);
+});
+test("Stack has the correct static methods", function () {
+    expect(2);
+    ok(typeof Stack.create === "function");
+    ok(typeof Stack.alias === "function");
+});
+test("create can take a function and return a stack", function () {
+    ok(Stack.create(function () {}) instanceof Stack);
+});
+test("create can take a stack and return a stack", function () {
+    var stack = Stack();
+    ok(Stack.create(stack) === stack);
+});
+test("alias creates another reference on the prototype", function () {
+    var stack = Stack();
+    ok(stack.from === stack.push);
+});
+test("instances of stack can be identified", function () {
+    var stack = new Stack();
+    ok(stack.isStack === true);
+});
+test("instances of Stack have the correct api", function () {
+    expect(24);
+    var stack = new Stack();
+    ok(typeof stack.clone === "function");
+    ok(typeof stack.push === "function");
+    ok(typeof stack.pop === "function");
+    ok(typeof stack.shift === "function");
+    ok(typeof stack.unshift === "function");
+    ok(typeof stack.insert === "function");
+    ok(typeof stack.before === "function");
+    ok(typeof stack.index === "function");
+    ok(typeof stack.uses === "function");
+    ok(typeof stack.using === "function");
+    ok(typeof stack.composedWith === "function");
+    ok(typeof stack.precedes === "function");
+    ok(typeof stack.precedent === "function");
+    ok(typeof stack.superPrecedent === "function");
+    ok(typeof stack.distribute === "function");
+    ok(typeof stack.distributeAll === "function");
+    ok(typeof stack.call === "function");
+    ok(typeof stack.apply === "function");
+    ok(typeof stack.some === "function");
+    ok(typeof stack.every === "function");
+    ok(typeof stack.from === "function");
+    ok(typeof stack.to === "function");
+    ok(typeof stack.compose === "function");
+    ok(typeof stack.tail === "function");
+});
+test("instances of Stack have fn and next properties", function () {
+    expect(2);
+    var stack = new Stack();
+    ok(stack.hasOwnProperty("fn"));
+    ok(stack.hasOwnProperty("next"));
+});
+test("Stack assigns 'identity' to fn property by default", function () {
+    var stack = new Stack();
+    ok(typeof stack.fn === "function");
+});
+test("identity function returns the first argument when there is only one", function () {
+    var stack = new Stack();
+    ok(stack.fn.call(null, 1) === 1);
+});
+test("identity function returns the arguments when there are more than one", function () {
+    var stack = new Stack();
+    var args = stack.fn.call(null, 1, 2, 3);
+    ok(args[0] === 1);
+});
+test("Stack assigns undefined to next by default", function () {
+    var stack = new Stack();
+    ok(typeof stack.next === "undefined");
+});
+test("Stack assigns a function parameter to the fn property", function () {
     function bang(val) {
         return val + "!";
     }
     ok(Stack(bang).fn === bang);
+});
+test("Stack assigns a stack to next for the second parameter", function () {
+    function bang(val) {
+        return val + "!";
+    }
     function greet(name) {
         return "Hi, " + name;
     }
-    ok(Stack(greet, Stack(bang)).call("Dave") === "Hi, Dave!");
+    var stackBang = Stack(bang);
+    ok(Stack(greet, stackBang).next === stackBang);
+});
+test("Stack can create a stack from an array of functions", function () {
+    expect(3);
+    function bang(val) {
+        return val + "!";
+    }
+    function greet(name) {
+        return "Hi, " + name;
+    }
     function addO(name) {
         return name + "-O";
     }
-    ok(Stack([bang, addO, greet]).call("Dave") === "Hi, Dave-O!");
+    var stack = Stack([bang, addO, greet]);
+    ok(stack.fn === greet);
+    ok(stack.next.fn === addO);
+    ok(stack.next.next.fn === bang);
+});
+test("Stack can create a stack from an array of functions and stacks", function () {
+    expect(3);
+    function bang(val) {
+        return val + "!";
+    }
+    function greet(name) {
+        return "Hi, " + name;
+    }
+    function addO(name) {
+        return name + "-O";
+    }
     var greetStack = Stack([bang, addO, greet]);
     function openEmote(val) {
         return val + "/*";
@@ -28,10 +133,12 @@ test("Stack constructor", function () {
     function highFive(val) {
         return val + "gives a high five";
     }
-    ok(Stack([closeEmote, highFive, openEmote, greetStack]).call("Dave") === "Hi, Dave-O!/*gives a high five*/");
+    var stack = Stack([closeEmote, highFive, openEmote, greetStack]);
+    ok(stack === greetStack);
+    ok(stack.tail().fn === closeEmote);
+    ok(stack.superPrecedent().fn === highFive);
 });
-test("call", function () {
-    expect(4);
+test("call can compose a stack", function () {
     function a(val) {
         return "a" + val;
     }
@@ -45,25 +152,41 @@ test("call", function () {
     var stackB = new Stack(b, stackA);
     var stackC = new Stack(c, stackB);
     ok(stackC.call(1) === "abc1");
+});
+test("call can follow a stack returned by a stack.fn", function () {
+    function a(val) {
+        return "a" + val;
+    }
+    function b(val) {
+        return "b" + val;
+    }
+    function c(val) {
+        return "c" + val;
+    }
     function decide(val) {
         return val === "c1" ? Stack(a) : Stack(b);
     }
     var stack = Stack([decide,c]);
     ok(stack.call(1) === "ac1");
     ok(stack.call(0) === "bc0");
+});
+test("call will not overflow the stack", function () {
     function add1(val) {
         return val + 1;
     }
-    function ident(val) {
+    function stringVal(val) {
         return "value is " + val;
     }
     stack = Stack(add1);
     function decideAdd(val) {
-        return val > 5000 ? Stack(ident) : stack;
+        return val > 5000 ? Stack(stringVal) : stack;
     }
     stack.insert(decideAdd);
     ok("recursive decitions should not overflow", stack.call(0) === "value is 5001");
 });
+//    ok(Stack(greet, Stack(bang)).call("Dave") === "Hi, Dave!");
+//    ok(Stack([bang, addO, greet]).call("Dave") === "Hi, Dave-O!");
+//    ok(Stack([closeEmote, highFive, openEmote, greetStack]).call("Dave") === "Hi, Dave-O!/*gives a high five*/");
 test("push a function", function() {
     expect(6);
     function a(val) {

@@ -176,6 +176,36 @@
         return stack;
     });
     /**
+     * pop
+     * [a[b[c]]].pop() => [a], [b[c]] // [a]
+     * @returns {Stack}
+     */
+    Stack.prototype.pop = function () {
+        this.next = undef;
+        return this;
+    };
+    /**
+     * shift
+     * [a[b[c]]].shift() => [a[b]] // [c]
+     * @returns {Stack}
+     */
+    Stack.prototype.shift = function () {
+        var p = this.superPrecedent();
+        var removed = p.next;
+        p.next = undef;
+        return removed;
+    };
+    /**
+     * unshift
+     * [a[b]].unshift(c) => [a[b[c]]] // [c]
+     * @param fn {Stack|function}
+     * @returns {Stack}
+     * @throws {TypeError}
+     */
+    Stack.prototype.unshift = function (fn) {
+        return this.precedent().insert(fn);
+    };
+    /**
      * insert
      * [a].insert(b) => [a[b]] // [b].insert(c) => [a[b[c]]] // [c]
      * [a].insert([b]) => [a[b]] // [b].insert([c]) => [a[b[c]]] // [c]
@@ -192,16 +222,6 @@
         return this;
     });
     /**
-     * unshift
-     * [a[b]].unshift(c) => [a[b[c]]] // [c]
-     * @param fn {Stack|function}
-     * @returns {Stack}
-     * @throws {TypeError}
-     */
-    Stack.prototype.unshift = function (fn) {
-        return this.precedent().insert(fn);
-    };
-    /**
      * before
      * insert [a] before [b]
      * [a[b[c]]].before(b, d) => [a[b[d[c]]]] // [b[d[c]]]
@@ -215,26 +235,6 @@
     }, function (a, b) {
         return (this.precedent(a || undef) || this).insert(b);
     });
-    /**
-     * shift
-     * [a[b[c]]].shift() => [a[b]] // [c]
-     * @returns {Stack}
-     */
-    Stack.prototype.shift = function () {
-        var p = this.superPrecedent();
-        var removed = p.next;
-        p.next = undef;
-        return removed;
-    };
-    /**
-     * pop
-     * [a[b[c]]].pop() => [a], [b[c]] // [a]
-     * @returns {Stack}
-     */
-    Stack.prototype.pop = function () {
-        this.next = undef;
-        return this;
-    };
     /**
      * index
      * [a[b[c]]].index(1) // [b]
