@@ -194,16 +194,13 @@ test("call will not overflow the stack", function () {
     function stringVal(val) {
         return "value is " + val;
     }
-    stack = Stack(add1);
+    var stack = Stack(add1);
     function decideAdd(val) {
         return val > 5000 ? Stack(stringVal) : stack;
     }
     stack.insert(decideAdd);
-    ok("recursive decitions should not overflow", stack.call(0) === "value is 5001");
+    ok("recursive decisions should not overflow", stack.call(0) === "value is 5001");
 });
-//    ok(Stack(greet, Stack(bang)).call("Dave") === "Hi, Dave!");
-//    ok(Stack([bang, addO, greet]).call("Dave") === "Hi, Dave-O!");
-//    ok(Stack([closeEmote, highFive, openEmote, greetStack]).call("Dave") === "Hi, Dave-O!/*gives a high five*/");
 test("push of a function creates a new head", function() {
     expect(3);
     function a(val) {
@@ -639,6 +636,7 @@ test("before inserts a stack before the given stack", function () {
     ok(stack.call(1) === "cba1");
 });
 test("some distributes until a stack fn returns true", function () {
+    expect(4);
     var falsecount = 0;
     function truthy() {
         return true;
@@ -649,12 +647,14 @@ test("some distributes until a stack fn returns true", function () {
     }
     var allfalse = Stack([falsey, falsey, falsey]);
     var onetrue = Stack([falsey, truthy, falsey]);
-    expect(8);
     ok(allfalse.some() === false);
     ok(falsecount = 3);
     falsecount = 0;
     ok(onetrue.some() === true);
     ok(falsecount = 1);
+});
+test("some can take an argument", function () {
+    expect(2);
     function isOne(data) {
         return data === 1;
     }
@@ -664,20 +664,51 @@ test("some distributes until a stack fn returns true", function () {
     function isOdd(data) {
         return data%2 === 1;
     }
-    allfalse = Stack([isOne, isTwo, isOdd]);
+    var allfalse = Stack([isOne, isTwo, isOdd]);
     ok(allfalse.some(0) === false);
-    onetrue = Stack([isOne, isTwo, isOdd]);
+    var onetrue = Stack([isOne, isTwo, isOdd]);
     ok(onetrue.some(2) === true);
+});
+test("some can take a receiver object", function () {
+    expect(2);
     function isTest(data) {
         return data === this.test;
     }
-    var obj = {test: 1};  //todo
-    allfalse = Stack([isTest, isTwo, isOdd]);
-    ok(allfalse.some(0) === false);
-    ok(allfalse.some(1) === true);
-    //todo branching
+    function isTwo(data) {
+        return data === 2;
+    }
+    function isOdd(data) {
+        return data%2 === 1;
+    }
+    var obj = {test: 1};
+    var stack = Stack([isTest, isTwo, isOdd]);
+    ok(stack.some(0, obj) === false);
+    ok(stack.some(2, obj) === true);
+});
+test("some can follow a returned stack", function () {
+    expect(5);
+    var wasZero = false;
+    function foundZero() {
+        wasZero = true;
+    }
+    function isOne(data) {
+        return data === 1;
+    }
+    function isTwo(data) {
+        return data === 0 ? Stack(foundZero, this.next) : data === 2;
+    }
+    function isOdd(data) {
+        return data%2 === 1;
+    }
+    var stack = Stack([isOne, isTwo, isOdd]);
+    ok(wasZero === false);
+    ok(stack.some(4) === false);
+    ok(wasZero === false);
+    ok(stack.some(0) === false);
+    ok(wasZero === true);
 });
 test("every distributes until a stack fn returns false", function () {
+    expect(4);
     var truecount = 0;
     function truthy() {
         truecount += 1;
@@ -688,12 +719,14 @@ test("every distributes until a stack fn returns false", function () {
     }
     var alltrue = Stack([truthy, truthy, truthy]);
     var onefalse = Stack([truthy, falsey, truthy]);
-    expect(8);
     ok(alltrue.every() === true);
     ok(truecount = 3);
     truecount = 0;
     ok(onefalse.every() === false);
     ok(truecount = 1);
+});
+test("every can take an argument", function () {
+    expect(2);
     function isOne(data) {
         return data === 1;
     }
@@ -703,10 +736,19 @@ test("every distributes until a stack fn returns false", function () {
     function isOdd(data) {
         return data%2 === 1;
     }
-    alltrue = Stack([isOne, isOdd]);
+    var alltrue = Stack([isOne, isOdd]);
     ok(alltrue.every(1) === true);
-    onefalse = Stack([isOne, isTwo, isOdd]);
+    var onefalse = Stack([isOne, isTwo, isOdd]);
     ok(onefalse.every(1) === false);
+});
+test("every can take a receiver object", function () {
+    expect(2);
+    function isOne(data) {
+        return data === 1;
+    }
+    function isOdd(data) {
+        return data%2 === 1;
+    }
     function isTest(data) {
         return data === this.test;
     }
@@ -715,5 +757,77 @@ test("every distributes until a stack fn returns false", function () {
     ok(alltrue.every(1, obj) === true);
     obj.test = 2;
     ok(alltrue.every(1, obj) === false);
-    //todo branching
+});
+test("every can follow a returned stack", function () {
+    expect(5);
+    var wasOne = false;
+    function foundOne() {
+        wasOne = true;
+    }
+    function isOne(data) {
+        return data === 1;
+    }
+    function isTwo(data) {
+        return data === 1 ? Stack(foundOne, this.next) : data === 2;
+    }
+    function isOdd(data) {
+        return data%2 === 1;
+    }
+    var stack = Stack([isOne, isTwo, isOdd]);
+    ok(wasOne === false);
+    ok(stack.every(0) === false);
+    ok(wasOne === false);
+    ok(stack.every(1) === true);
+    ok(wasOne === true);
+});
+test("iterators can return a continuation", function () {
+    function a(val) {
+        return "a" + val;
+    }
+    function b(val) {
+        return "b" + val;
+    }
+    function c(val) {
+        return "c" + val;
+    }
+    function pause() {
+        return this.pause();
+    }
+    var stack = Stack([a,b,pause,c]);
+    var cont = stack.call(1);
+    ok(cont.isContinuation === true);
+});
+test("continuations can be run to completion", function () {
+    function a(val) {
+        return "a" + val;
+    }
+    function b(val) {
+        return "b" + val;
+    }
+    function c(val) {
+        return "c" + val;
+    }
+    function pause() {
+        return this.pause();
+    }
+    var stack = Stack([a,b,pause,c]);
+    var cont = stack.call(1);
+    ok(cont.run() === "abc1");
+});
+test("continuations can return current value", function () {
+    function a(val) {
+        return "a" + val;
+    }
+    function b(val) {
+        return "b" + val;
+    }
+    function c(val) {
+        return "c" + val;
+    }
+    function pause() {
+        return this.pause();
+    }
+    var stack = Stack([a,b,pause,c]);
+    var cont = stack.call(1);
+    ok(cont.value() === "c1");
 });

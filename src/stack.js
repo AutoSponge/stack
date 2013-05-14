@@ -47,9 +47,6 @@
     function identity(val) {
         return arguments.length > 1 ? arguments : val;
     }
-    function isFalse(val) {
-        return val === false;
-    }
     function call(arg, receiver) {
         return this.fn.call(receiver || this, arg);
     }
@@ -77,13 +74,38 @@
             };
         });
     }
-    function Continuation(fn, next, args) {
+
+    /**
+     * @param fn {function}
+     * @param receiver {Stack}
+     * @param args {Array}
+     * @constructor
+     */
+    function Continuation(fn, receiver, args) {
         this.fn = fn;
-        this.next = next;
+        this.receiver = receiver;
         this.args = args;
     }
-    Continuation.prototype.invoke = function (){
-        return trampoline(this.fn).apply(this.next, this.args);
+    /**
+     * help identify continuations without access to the constructor
+     * @type {boolean}
+     */
+    Continuation.prototype.isContinuation = true;
+    /**
+     * complete the continued iteration
+     * @param [args {Array}]
+     * @param [receiver {Object}]
+     * @returns {*}
+     */
+    Continuation.prototype.run = function (args, receiver){
+        return trampoline(this.fn).apply(receiver || this.receiver, args || this.args);
+    };
+    /**
+     * value or state of a continuation
+     * @returns {*}
+     */
+    Continuation.prototype.value = function () {
+        return (this.args && this.args.length === 2 && this.args[1] === undef) ? this.args[0] : this.args;
     };
     function iterate(action, accumulator, limit) {
         return trampoline(function iterating() {
@@ -110,9 +132,7 @@
             };
         });
     }
-
     /**
-     * Stack
      * Stack() => [identity] // [identity]
      * Stack(a) => [a] // [a]
      * Stack([a,b,c]) => [c[b[a]]] // [c[b[a]]]
@@ -137,9 +157,13 @@
         this.fn = fn || identity;
         this.next = next || undef;
     }
+
+    /**
+     * the common pause object
+     * @type {Object}
+     */
     Stack.pause = {};
     /**
-     * create
      * @param {Stack|function}
      * @static
      * @returns {Stack}
@@ -147,7 +171,6 @@
      */
     Stack.create = stackable(Stack, identity);
     /**
-     * alias
      * @param prop {string}
      * @param rename {string}
      * @static
@@ -158,28 +181,32 @@
         return this;
     };
     /**
-     * isStack
      * used to identify stack instances
      * @type {boolean}
      */
     Stack.prototype.isStack = true;
     /**
-     * clone
+     * used to return a continuation from a stack iterator
+     * @returns {Object}
+     */
+    Stack.prototype.pause = function () {
+        return Stack.pause;
+    };
+    /**
      * [a[b[c]]].clone() // [a[b[c]]]
      * [a[b[c]]].clone(d) // [d[b[c]]]
      * [a[b[c]]].clone(null, [d]) // [a[d]]
      * [a[b[c]]].clone(d, [e]) // [d[e]]
-     * @param fn {function}
-     * @param next {Stack}
+     * @param [fn {function}]
+     * @param [next {Stack}]
      * @returns {Stack}
      */
     Stack.prototype.clone = function (fn, next) {
         return new Stack(fn || this.fn, next || this.next);
     };
     /**
-     * push
      * [a].push(b) => [b[a]].push(c) => [c[b[a]]] // [c[b[a]]]
-     * @param fn {Stack|function}
+     * @param [fn {Stack|function}]
      * @returns {Stack}
      * @throws {TypeError}
      */
@@ -190,7 +217,6 @@
         return stack;
     });
     /**
-     * pop
      * [a[b[c]]].pop() => [a], [b[c]] // [a]
      * @returns {Stack}
      */
@@ -199,7 +225,6 @@
         return this;
     };
     /**
-     * shift
      * [a[b[c]]].shift() => [a[b]] // [c]
      * @returns {Stack}
      */
@@ -210,9 +235,8 @@
         return removed;
     };
     /**
-     * unshift
      * [a[b]].unshift(c) => [a[b[c]]] // [c]
-     * @param fn {Stack|function}
+     * @param [fn {Stack|function}]
      * @returns {Stack}
      * @throws {TypeError}
      */
@@ -220,10 +244,9 @@
         return this.precedent().insert(fn);
     };
     /**
-     * insert
      * [a].insert(b) => [a[b]] // [b].insert(c) => [a[b[c]]] // [c]
      * [a].insert([b]) => [a[b]] // [b].insert([c]) => [a[b[c]]] // [c]
-     * @param {Stack|function}
+     * @param [fn {Stack|function}]
      * @returns {Stack}
      * @throws {TypeError}
      */
@@ -236,11 +259,10 @@
         return this;
     });
     /**
-     * before
      * insert [a] before [b]
      * [a[b[c]]].before(b, d) => [a[b[d[c]]]] // [b[d[c]]]
-     * @param a {?Stack|function}
-     * @param b {?Stack|function}
+     * @param [a {?Stack|function}]
+     * @param [b {?Stack|function}]
      * @returns {Stack}
      * @throws {TypeError}
      */
@@ -250,7 +272,6 @@
         return (this.precedent(a || undef) || this).insert(b);
     });
     /**
-     * index
      * [a[b[c]]].index(1) // [b]
      * @param idx {number}
      * @returns {?Stack}
@@ -261,113 +282,105 @@
         return [--val];
     });
     /**
-     * uses
      * [a].uses(a) // true
-     * @param fn {function}
+     * @param [fn {function}]
      * @returns {boolean}
      */
     Stack.prototype.uses = function (fn) {
         return this.fn === fn;
     };
     /**
-     * using
      * [a[b[c]]].using(b) // [b]
-     * @param fn {function}
+     * @param [fn {function}]
      * @returns {?Stack}
      */
     Stack.prototype.using = recur(Stack.prototype.uses);
     /**
-     * composedWith
      * [a[b[c]]].composedWith(b) // [a]
-     * @param fn {function}
+     * @param [fn {function}]
      * @returns {?Stack}
      */
     Stack.prototype.composedWith = recur(function (fn) {
         return this.next && this.next.fn === fn;
     });
     /**
-     * precedes
      * [a[b]].precedes([b]) // true
-     * @param stack {?Stack}
+     * @param [stack {Stack}]
      * @returns {boolean}
      */
     Stack.prototype.precedes = function (stack) {
         return this.next === stack;
     };
     /**
-     * precedent
      * [a[b[c]]].precedent([c]) // [b[c]]
-     * @param {?Stack}
+     * @param [stack {Stack}]
      * @returns {?Stack}
      */
     Stack.prototype.precedent = recur(Stack.prototype.precedes);
     /**
-     * superPrecedent
      * [a[b[c[d]]]].superPrecedent([d]) // [b]
-     * @param {?Stack}
+     * @param [stack {Stack}]
      * @returns {?Stack}
      */
     Stack.prototype.superPrecedent = recur(function (stack) {
         return this.next && this.next.next === stack;
     });
     /**
-     * distribute
      * [a[b[c]]].distribute({x}) || a(x), b(x), c(x)
      * [a[b[c]]].distribute({x}, ?) || ?.a(x), ?.b(x), ?.c(x)
-     * @param {*}
-     * @param receiver {object}
-     * @returns {*}
+     * @param [arg {*}]
+     * @param [receiver {object}]
+     * @returns {*|Continuation}
      */
     Stack.prototype.distribute = iterate(call);
     /**
-     * distributeAll
      * [a[b[c]]].distributeAll([{x},{y},{z}]) || a(x,y,z), b(x,y,z), c(x,y,z)
      * [a[b[c]]].distributeAll([{x},{y},{z}], ?) || ?.a(x,y,z), ?.b(x,y,z), ?.c(x,y,z)
-     * @param args {array}
-     * @param receiver {object}
-     * @returns {undefined}
+     * @param [args {array}]
+     * @param [receiver {object}]
+     * @returns {undefined|Continuation}
      */
     Stack.prototype.distributeAll = iterate(apply);
     /**
-     * call
      * [a[b[c]]].call({x}) // c(b(a(x)))
      * [a[b[c]]].call({x}, ?) // ?.c(?.b(?.a(x)))
-     * @param arg {*} 
-     * @param receiver {object}
-     * @returns {*}
+     * @param [arg {*}]
+     * @param [receiver {object}]
+     * @returns {*|Continuation}
      */
     Stack.prototype.call = iterate(call, function (val, arg, receiver) {
         return [val, receiver];
     });
     /**
-     * apply
      * [a[b[c]]].apply([{x},{y},{z}]) // c(b(a(x,y,z)))
      * [a[b[c]]].apply([{x},{y},{z}], ?) // ?.c(?.b(?.a(x,y,z)))
-     * @param args {array}
-     * @param receiver {object}
-     * @returns {*}
+     * @param [args {array}]
+     * @param [receiver {object}]
+     * @returns {*|Continuation}
      */
     Stack.prototype.apply = iterate(apply, function (val, args, receiver) {
         return [makeArray(val), receiver];
     });
     /**
-     * some
      * [a[b[c]]].some() || !c() && !b() && !c() // true|false
      * [a[b[c]]].some({x}) || !c(x) && !b(x) && !c(x) // true|false
-     * @param arg {*}
-     * @param receiver {object}
-     * @returns {boolean}
+     * @param [arg {*}]
+     * @param [receiver {object}]
+     * @returns {boolean|Continuation}
      */
-    Stack.prototype.some = iterate(call, null, identity);
+    Stack.prototype.some = iterate(call, null, function (val) {
+        return val === true;
+    });
     /**
-     * every
      * [a[b[c]]].every() || c() && b() && c() // true|false
      * [a[b[c]]].every({x}) || c(x) && b(x) && c(x) // true|false
-     * @param arg {*}
-     * @param receiver {object}
-     * @returns {boolean}
+     * @param [arg {*}]
+     * @param [receiver {object}]
+     * @returns {boolean|Continuation}
      */
-    Stack.prototype.every = iterate(call, null, isFalse);
+    Stack.prototype.every = iterate(call, null, function (val) {
+        return val === false;
+    });
     /**
      * @borrows push as from
      */

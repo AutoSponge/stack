@@ -16,6 +16,14 @@ Recursion:
 * Stack.some and Stack.every allow analysis
 * All recursive methods implement a trampoline to avoid stack overflow
 
+Continuations:
+* Stacks can pause execution to return a continuation object
+* Continuations can be used for asynchronous processing or debugging
+
+Branching Logic:
+* Stacks can return other stacks to dynamically branch a process
+* Stacks can modify the stack structure while processing
+
 Possible uses:
 * Create lists of functions to compose
 * Create lists of handlers to fire (e.g., PubSub)
@@ -24,8 +32,7 @@ Possible uses:
 
 TODO
 ====
-* document branching logic
-* test and document continuation objects
+* complete railroad diagrams
 
 <pre>
 StackInstance
@@ -35,8 +42,8 @@ Stack
 ::= 'new'? 'Stack(' (Function ( StackInstance |) | ( '[' ( Function | StackInstance )* ']' ) ) ')' StackInstance
 
 call
-::= StackInstance '.call(' '*' ( ',' Object )? ')' ( call )* '*'
+::= StackInstance '.call(' '*' ( ',' Object )? ')' ( call | continuation | )* '*'
 
 apply
-::= StackInstance '.apply(' '[' '*'* ']' ( ',' Object )? ')' ( apply )* '*' 
+::= StackInstance '.apply(' '[' '*'* ']' ( ',' Object )? ')' ( apply | continuation | )* '*'
 </pre>
