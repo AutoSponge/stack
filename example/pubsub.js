@@ -38,7 +38,7 @@
             return function () {
                 var args = arguments;
                 getStacks(topic).forEach(function (stack) {
-                    stack.apply(args);
+                    stack.distributeAll(args);
                 });
             };
         },
