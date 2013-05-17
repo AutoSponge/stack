@@ -5,7 +5,11 @@ function Feature(description) {
     this.description = description;
     this.disable = function () {};
     this.conditions = this.results = new Stack();
+    Feature.register(this);
 }
+Feature.register = function (feature) {
+    return feature && ((this.index = this.index || {})[feature.description] = feature);
+};
 Feature.alias = function (prop, rename) {
     this.prototype[rename] = this.prototype[prop];
     return this;
