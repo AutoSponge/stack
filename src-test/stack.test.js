@@ -1,3 +1,4 @@
+module("Stack");
 test("Stack is a function", function () {
     ok(typeof Stack === "function");
 });
@@ -301,6 +302,34 @@ test("apply takes a receiver object as the second parameter", function () {
     ok(Stack([sumThis, decide, flatten]).apply([[1],[2],[3]], obj) === 14);
     ok(Stack([sumThis, decide, flatten]).apply([[1],[2]], obj) === 4);
 });
+test("drop will remove the head and return the next stack", function () {
+    expect(2);
+    function a(data) {
+        return "a" + data;
+    }
+    function b(data) {
+        return "b" + data;
+    }
+    var stack = Stack([a,b]);
+    stack = stack.drop();
+    ok(stack.call(1) === "a1");
+    stack = stack.drop();
+    ok(stack === undefined);
+});
+test("remove will remove the next stack", function () {
+    function a(data) {
+        return "a" + data;
+    }
+    function b(data) {
+        return "b" + data;
+    }
+    function c(data) {
+        return "c" + data;
+    }
+    var stack = Stack([a,b,c]);
+    stack.remove();
+    ok(stack.call(1) === "ac1");
+});
 test("insert can stack a function", function () {
     expect(3);
     function a(data) {
@@ -315,6 +344,23 @@ test("insert can stack a function", function () {
     var stack = Stack([a,c]);
     ok(stack.call(1) === "ac1");
     ok(stack.insert(b).call(1) === "ab1");
+    ok(stack.call(1) === "abc1");
+});
+test("insert can stack a stack", function () {
+    expect(3);
+    function a(data) {
+        return "a" + data;
+    }
+    function b(data) {
+        return "b" + data;
+    }
+    function c(data) {
+        return "c" + data;
+    }
+    var stack = Stack([a,c]);
+    var stackb = Stack(b);
+    ok(stack.call(1) === "ac1");
+    ok(stack.insert(stackb).call(1) === "abc1");
     ok(stack.call(1) === "abc1");
 });
 test("tail returns the last stack, the stack with no next", function () {
@@ -831,3 +877,34 @@ test("continuations can return current value", function () {
     var cont = stack.call(1);
     ok(cont.value() === "c1");
 });
+test("find can return a stack by id", function () {
+    function a(val) {
+        return "a" + val;
+    }
+    function b(val) {
+        return "b" + val;
+    }
+    function c(val) {
+        return "c" + val;
+    }
+    var stack = Stack(b);
+    stack.id = "stackB";
+    ok(Stack([a,stack,c]).find("stackB") === stack);
+});
+test("stacks will fill a debug method while iterating", function () {
+    var stack = Stack();
+    var output = {};
+    stack.debug = function (arg) {
+        output[this.id] = arg;
+    }
+    stack.call(1);
+    ok(output[stack.id][0] = 1);
+});
+/* doesn't work with JSTestDriver adapter
+test("stackable methods throw errors", function () {
+    var stack = Stack();
+    throws(
+        function () {stack.push({})}
+    );
+});
+*/

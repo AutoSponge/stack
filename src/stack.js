@@ -26,6 +26,12 @@
     function error() {
         throw new TypeError("Argument must be a function or Stack.");
     }
+    function s4() {
+        return (((1+Math.random())*0x10000)|0).toString(16).substring(1);
+    }
+    function guid() {
+        return (s4() + s4() + "-" + s4() + s4() + "-" + s4() + "-" + s4() + s4() + s4()).toLowerCase();
+    }
     function merge(a, b) {
         Array.prototype.push.apply(a, b);
         return a;
@@ -111,6 +117,10 @@
         return trampoline(function iterating() {
             var self = this;
             var args = arguments;
+            if (self.debug) {
+                self.id = self.id || guid();
+                self.debug(self, args, action, accumulator, limit);
+            }
             return function () {
                 var val = action.apply(self, args);
                 if (limit && limit.call(self, val)) {
@@ -142,6 +152,11 @@
      * @param next [{?Stack}]
      * @returns {Stack}
      * @constructor
+     *
+     * to debug a stack while iterating, place a debug method on the stack
+     * to debug all stacks, place a debug method on the prototype
+     * debugging stacks will generate a guid if they have no id
+     * @example Stack.prototype.debug = function () {console.log(arguments);};
      */
     function Stack(fn, next) {
         var arr;
@@ -244,6 +259,25 @@
         return this.precedent().insert(fn);
     };
     /**
+     * [a].drop() // undefined
+     * [a[b]].drop() => [a], [b] // [b]
+     */
+    Stack.prototype.drop = function () {
+        var next = this.next;
+        this.next = undef;
+        return next;
+    };
+    /**
+     * [a[b[c]]].remove() => [a[c]] // [a[c]]
+     * @returns {Stack}
+     */
+    Stack.prototype.remove = function () {
+        if (this.next) {
+            this.next = this.next.next;
+        }
+        return this;
+    };
+    /**
      * [a].insert(b) => [a[b]] // [b].insert(c) => [a[b[c]]] // [c]
      * [a].insert([b]) => [a[b]] // [b].insert([c]) => [a[b[c]]] // [c]
      * @param [fn {Stack|function}]
@@ -280,6 +314,13 @@
         return val === 0;
     }, function (val) {
         return [--val];
+    });
+    /**
+     * @param id {string}
+     * @returns {?Stack}
+     */
+    Stack.prototype.find = recur(function (id) {
+        return this.id === id;
     });
     /**
      * [a].uses(a) // true

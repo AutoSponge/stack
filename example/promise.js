@@ -101,46 +101,5 @@
     global.Promise = Promise;
 }(this));
 
-function reset(promise) {
-    promise.state = new Promise().state;
-}
-
-var p1 = Promise(function () {
-    console.log("done");
-}, function () {
-    console.log("fail");
-});
-
-p1.when(true); //done
-reset(p1);
-
-p1.when(false); //fail
-reset(p1);
-
-p1.when(function () {
-    return true;
-}); //done
-reset(p1);
-
-var p2 = Promise();
-var p3 = Promise(function (data) {
-    if (data === "finish") {
-        p2.resolve()
-    } else {
-        console.log("miss");
-    }
-});
-p1.when(p2, p3);
-//p3.resolve(); //miss
-p3.resolveWith(null, "finish"); //done
-reset(p1);
-
-p1.when(function () {
-    var p = new Promise();
-    setTimeout(function () {
-        p.resolve();
-    }, 10)
-    return p;
-}); //done
 
 

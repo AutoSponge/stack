@@ -1,11 +1,10 @@
 (function (namespace) {
     var topics = {};
-    var idSeed = 0;
     function getTopic(key) {
         return topics[key];
     }
     function isStack(stack) {
-        return stack instanceof Stack;
+        return stack && stack.isStack;
     }
     function derivatives(topic) {
         return topic.split("/").map(function (e, i, arr) {
@@ -16,54 +15,44 @@
     function getStacks(topic) {
         return derivatives(topic).map(getTopic).filter(isStack);
     }
-    function PubSub(id) {
-        if (!(this instanceof PubSub)) {
-            return new PubSub(id);
+    namespace.PubSub = {
+        subscribe: function (topic, fn, receiver) {
+            var f = receiver ? fn.bind(receiver) : fn;
+            topics[topic] = topics[topic] && topics[topic].push(f) || new Stack(f);
+            return f;
+        },
+        unsubscribe: function (topic, fn) {
+            var stack = getTopic(topic);
+            if (stack) {
+                if (stack.uses(fn)) {
+                    topics[topic] = stack.drop();
+                } else {
+                    stack = stack.composedWith(fn);
+                    if (stack) {
+                        stack.remove();
+                    }
+                }
+            }
+        },
+        publish: function (topic) {
+            return function () {
+                var args = arguments;
+                getStacks(topic).forEach(function (stack) {
+                    stack.apply(args);
+                });
+            };
+        },
+        installTo: function (obj) {
+            var self = this;
+            obj.publish = function () {
+                return self.publish.apply(self, arguments);
+            };
+            obj.subscribe = function () {
+                return self.subscribe.apply(self, arguments);
+            };
+            obj.unsubscribe = function () {
+                return self.unsubscribe.apply(self, arguments);
+            }
         }
-        if (!PubSub.index) {
-            PubSub.index = {};
-        }
-        this.id = !id ? idSeed++ : id;
-        PubSub.index[this.id] = this;
-    }
-    PubSub.prototype.subscribe = function (topic, fn) {
-        var stack = topics[topic];
-        if (!stack) {
-            topics[topic] = new Stack(fn);
-        } else {
-            stack.push(fn);
-        }
-        return this;
     };
-    PubSub.prototype.unsubscribe = function (topic, fn) {
-        var head = topics[topic].priorFn(fn);
-        if (head && head.next) {
-            head.next = head.next.next;
-        }
-        return this;
-    };
-    PubSub.prototype.publish = function (topic, data, context) {
-        getStacks(topic).forEach(function (stack) {
-            stack.call(data, context);
-        });
-    };
-
-    namespace.PubSub = PubSub;
 }(this));
-
-var pubsub = new PubSub();
-pubsub.subscribe("log/*/test", function (data) {
-    console.log("heard", data)
-});
-pubsub.subscribe("log/first/test", function (data) {
-    console.log("first", data)
-});
-pubsub.publish("log/first/test", 1); //first 1, heard 1
-pubsub.publish("log/second/test", 2); //heard 2
-function second(data) {
-    console.log("second", data);
-}
-pubsub.subscribe("log/second/test", second);
-pubsub.publish("log/second/test", 3); //second 3, heard 3
-pubsub.unsubscribe("log/second/test", second);
-pubsub.publish("log/second/test", 4); //heard 4
