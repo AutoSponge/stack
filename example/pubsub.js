@@ -43,15 +43,16 @@
             };
         },
         installTo: function (obj) {
-            var self = this;
-            obj.publish = function () {
-                return self.publish.apply(self, arguments);
-            };
-            obj.subscribe = function () {
-                return self.subscribe.apply(self, arguments);
-            };
-            obj.unsubscribe = function () {
-                return self.unsubscribe.apply(self, arguments);
+            var self = this,
+                prop;
+            for (prop in this) {
+                if (prop !== "installTo" && this.hasOwnProperty(prop)) {
+                    obj[prop] = (function (name) {
+                        return function () {
+                            return self[name].apply(self, arguments);
+                        };
+                    }(prop));
+                }
             }
         }
     };

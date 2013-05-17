@@ -47,7 +47,7 @@ asyncTest("promises", function () {
             p.resolve();
             ok(status === "done");
             start();
-        }, 10)
+        }, 10);
         return p;
     });
 });
