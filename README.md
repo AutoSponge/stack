@@ -33,7 +33,9 @@ Possible uses:
 TODO
 ====
 * complete railroad diagrams
-
+* incorporate promises with continuations: promise continuation should be lazy to avoid premature determination.
+For example, if the next stack contains a decision which can return a stack but requires async data to make
+the decision, a continuation should be called upon promise resolution to ensure the correct path continues.
 <pre>
 StackInstance
 ::= head-tail/head ( precedent? | ( stack* | )? superPrecedent  precedent | )? tail
