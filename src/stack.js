@@ -134,6 +134,16 @@
                             return iterating.apply(this, arguments);
                         }, self.next, accumulator ? accumulator.apply(self, args) : args);
                 }
+                if (val && val.then && val.inspect().state === "pending") {
+                    val.then(function () {
+                        return self.next ?
+                                iterating.apply(self.next, accumulator ?
+                                    accumulator.apply(self, merge([val], args)) :
+                                    args)() :
+                                val;
+                    });
+                    return val;
+                }
                 return self.next ?
                     iterating.apply(self.next, accumulator ?
                         accumulator.apply(self, merge([val], args)) :
