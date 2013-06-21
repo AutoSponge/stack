@@ -900,11 +900,28 @@ test("stacks will fill a debug method while iterating", function () {
     stack.call(1);
     ok(output[stack.id][0] = 1);
 });
-/* doesn't work with JSTestDriver adapter
+//doesn't work with JSTestDriver adapter
 test("stackable methods throw errors", function () {
     var stack = Stack();
     throws(
         function () {stack.push({})}
     );
 });
-*/
+asyncTest("stacks can return a promise during iteration", function () {
+    var defer;
+    var value = false;
+    var s = Stack([function () {
+        value = true;
+    }, function () {
+        defer = when.defer();
+        return defer.promise;
+    }]);
+    ok("value initialized to false", value === false);
+    s.distribute();
+    ok("value remains false when stack returns a promise", value === false);
+    setTimeout(function() {
+        defer.resolve();
+        ok("value should be true when the promise resolves", value === true);
+        start();
+    }, 100);
+});
