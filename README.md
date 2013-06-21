@@ -20,6 +20,9 @@ Continuations:
 * Stacks can pause execution to return a continuation object
 * Continuations can be used for asynchronous processing or debugging
 
+Promises Aware:
+* Uses the when.js implementation of promises to defer execution
+
 Branching Logic:
 * Stacks can return other stacks to dynamically branch a process
 * Stacks can modify the stack structure while processing
@@ -33,9 +36,6 @@ Possible uses:
 TODO
 ====
 * complete railroad diagrams
-* incorporate promises with continuations: promise continuation should be lazy to avoid premature determination.
-For example, if the next stack contains a decision which can return a stack but requires async data to make
-the decision, a continuation should be called upon promise resolution to ensure the correct path continues.
 <pre>
 StackInstance
 ::= head-tail/head ( precedent? | ( stack* | )? superPrecedent  precedent | )? tail
@@ -44,8 +44,8 @@ Stack
 ::= 'new'? 'Stack(' (Function ( StackInstance |) | ( '[' ( Function | StackInstance )* ']' ) ) ')' StackInstance
 
 call
-::= StackInstance '.call(' '*' ( ',' Object )? ')' ( call | continuation | )* '*'
+::= StackInstance '.call(' '*' ( ',' Object )? ')' ( call | continuation | promise | )* '*'
 
 apply
-::= StackInstance '.apply(' '[' '*'* ']' ( ',' Object )? ')' ( apply | continuation | )* '*'
+::= StackInstance '.apply(' '[' '*'* ']' ( ',' Object )? ')' ( apply | continuation | promise | )* '*'
 </pre>
