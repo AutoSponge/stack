@@ -21,21 +21,25 @@
 /**
  * @lends Stack
  */
-(function(global, undef) {
+(function (global, undef) {
     "use strict";
     function error() {
         throw new TypeError("Argument must be a function or Stack.");
     }
+
     function s4() {
-        return (((1+Math.random())*0x10000)|0).toString(16).substring(1);
+        return (((1 + Math.random()) * 0x10000) | 0).toString(16).substring(1);
     }
+
     function guid() {
         return (s4() + s4() + "-" + s4() + s4() + "-" + s4() + "-" + s4() + s4() + s4()).toLowerCase();
     }
+
     function merge(a, b) {
         Array.prototype.push.apply(a, b);
         return a;
     }
+
     function stackable(fn, stack) {
         return function (a, b) {
             return !a ?
@@ -47,18 +51,23 @@
                         error();
         };
     }
+
     function makeArray(val) {
         return Array.isArray(val) ? val : val ? [val] : [];
     }
+
     function identity(val) {
         return arguments.length > 1 ? arguments : val;
     }
+
     function call(arg, receiver) {
         return this.fn.call(receiver || this, arg);
     }
+
     function apply(args, receiver) {
         return this.fn.apply(receiver || this, args);
     }
+
     function trampoline(fn) {
         return function () {
             var bounce = fn.apply(this, arguments);
@@ -68,6 +77,7 @@
             return bounce;
         };
     }
+
     function recur(matcher, transformer) {
         return trampoline(function recurring() {
             var self = this;
@@ -92,6 +102,7 @@
         this.receiver = receiver;
         this.args = args;
     }
+
     /**
      * help identify continuations without access to the constructor
      * @type {boolean}
@@ -103,7 +114,7 @@
      * @param [receiver {Object}]
      * @returns {*}
      */
-    Continuation.prototype.run = function (args, receiver){
+    Continuation.prototype.run = function (args, receiver) {
         return trampoline(this.fn).apply(receiver || this.receiver, args || this.args);
     };
     /**
@@ -131,18 +142,17 @@
                 }
                 if (val === Stack.pause) {
                     return new Continuation(function () {
-                            return iterating.apply(this, arguments);
-                        }, self.next, accumulator ? accumulator.apply(self, args) : args);
+                        return iterating.apply(this, arguments);
+                    }, self.next, accumulator ? accumulator.apply(self, args) : args);
                 }
                 if (val && val.then && val.inspect().state === "pending") {
-                    val.then(function () {
+                    return val.then(function () {
                         return self.next ?
-                                iterating.apply(self.next, accumulator ?
-                                    accumulator.apply(self, merge([val], args)) :
-                                    args)() :
-                                val;
+                            iterating.apply(self.next, accumulator ?
+                                accumulator.apply(self, args) :
+                                args)() :
+                            args;
                     });
-                    return val;
                 }
                 return self.next ?
                     iterating.apply(self.next, accumulator ?
@@ -152,6 +162,7 @@
             };
         });
     }
+
     /**
      * Stack() => [identity] // [identity]
      * Stack(a) => [a] // [a]

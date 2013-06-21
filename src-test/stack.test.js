@@ -907,7 +907,7 @@ test("stackable methods throw errors", function () {
         function () {stack.push({})}
     );
 });
-asyncTest("stacks can return a promise during iteration", function () {
+asyncTest("stacks can return a promise during distribute", function () {
     var defer;
     var value = false;
     var s = Stack([function () {
@@ -922,6 +922,60 @@ asyncTest("stacks can return a promise during iteration", function () {
     setTimeout(function() {
         defer.resolve();
         ok("value should be true when the promise resolves", value === true);
+        start();
+    }, 100);
+});
+asyncTest("stacks can return a promise during distributeAll", function () {
+    var defer;
+    var value = null;
+    var s = Stack([function (x, y) {
+        value = x + y;
+    }, function () {
+        defer = when.defer();
+        return defer.promise;
+    }]);
+    ok("value initialized to false", value === null);
+    s.distributeAll([1, 2]);
+    ok("value remains false when stack returns a promise", value === null);
+    setTimeout(function() {
+        defer.resolve();
+        ok("value should be true when the promise resolves", value === 3);
+        start();
+    }, 100);
+});
+asyncTest("stacks can return a promise during call", function () {
+    var defer;
+    var value = null;
+    var s = Stack([function (x) {
+        value = x;
+    }, function () {
+        defer = when.defer();
+        return defer.promise;
+    }]);
+    ok("value initialized to false", value === null);
+    s.call(1);
+    ok("value remains false when stack returns a promise", value === null);
+    setTimeout(function() {
+        defer.resolve();
+        ok("value should be true when the promise resolves", value === 1);
+        start();
+    }, 100);
+});
+asyncTest("stacks can return a promise during apply", function () {
+    var defer;
+    var value = null;
+    var s = Stack([function (x, y) {
+        value = x + y;
+    }, function () {
+        defer = when.defer();
+        return defer.promise;
+    }]);
+    ok("value initialized to false", value === null);
+    s.apply([1, 2]);
+    ok("value remains false when stack returns a promise", value === null);
+    setTimeout(function() {
+        defer.resolve();
+        ok("value should be true when the promise resolves", value === 3);
         start();
     }, 100);
 });
