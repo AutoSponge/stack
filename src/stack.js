@@ -394,6 +394,7 @@
      * @param [receiver {object}]
      * @returns {*|Continuation}
      */
+    //TODO rename to assign
     Stack.prototype.distribute = iterate(call);
     /**
      * [a[b[c]]].distributeAll([{x},{y},{z}]) || a(x,y,z), b(x,y,z), c(x,y,z)
@@ -402,6 +403,7 @@
      * @param [receiver {object}]
      * @returns {undefined|Continuation}
      */
+    //TODO rename to spread
     Stack.prototype.distributeAll = iterate(apply);
     /**
      * [a[b[c]]].call({x}) // c(b(a(x)))
@@ -410,6 +412,7 @@
      * @param [receiver {object}]
      * @returns {*|Continuation}
      */
+    //TODO rename to pipe
     Stack.prototype.call = iterate(call, function (val, arg, receiver) {
         return [val, receiver];
     });
@@ -420,6 +423,7 @@
      * @param [receiver {object}]
      * @returns {*|Continuation}
      */
+    //TODO rename to funnel
     Stack.prototype.apply = iterate(apply, function (val, args, receiver) {
         return [makeArray(val), receiver];
     });
