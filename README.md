@@ -11,8 +11,8 @@ Ease of use:
 * Many array methods are implemented using the same signature as native functions
 
 Recursion:
-* Stack.call and Stack.apply compose functions in (LIFO) order.
-* Each stack _HEAD_ can be called or applied, piping its function's output until it returns from the stack _TAIL_
+* Stack.pipe and Stack.funnel compose functions in (LIFO) order.
+* Each stack _HEAD_ can be piped or funneled, passing its function's output until it returns from the stack _TAIL_
 * Stack.some and Stack.every allow analysis
 * All recursive methods implement a trampoline to avoid stack overflow
 
