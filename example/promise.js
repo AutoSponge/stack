@@ -1,7 +1,7 @@
 (function (global) {
-    var resolved = {};
-    var rejected = {};
-    var unresolved = {};
+    var resolved = "resolved";
+    var rejected = "rejected";
+    var unresolved = "pending";
     var slice = Array.prototype.slice;
     function Promise(done, fail) {
         if (!(this instanceof Promise)) {
@@ -14,14 +14,14 @@
     Promise.prototype.resolve = function () {
         if (this.state === unresolved) {
             this.state = resolved;
-            this.resolveStack.distributeAll(arguments);
+            this.resolveStack.spread(arguments);
         }
         return this;
     };
     Promise.prototype.resolveWith = function (receiver) {
         if (this.state === unresolved) {
             this.state = resolved;
-            this.resolveStack.distributeAll(slice.call(arguments, 1), receiver);
+            this.resolveStack.spread(slice.call(arguments, 1), receiver);
         }
         return this;
     };
@@ -31,14 +31,14 @@
     Promise.prototype.reject = function () {
         if (this.state === unresolved) {
             this.state = rejected;
-            this.rejectStack.distributeAll(arguments);
+            this.rejectStack.spread(arguments);
         }
         return this;
     };
     Promise.prototype.rejectWith = function (receiver) {
         if (this.state === unresolved) {
             this.state = rejected;
-            this.rejectStack.distributeAll(slice.call(arguments, 1), receiver);
+            this.rejectStack.spread(slice.call(arguments, 1), receiver);
         }
         return this;
     };
@@ -58,6 +58,9 @@
     Promise.prototype.fail = function (fn) {
         this.rejectStack.insert(fn);
         return this;
+    };
+    Promise.prototype.inspect = function () {
+        return {state: this.state};
     };
     Promise.prototype.when = function () {
         var self = this;

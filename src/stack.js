@@ -35,11 +35,23 @@
         return (s4() + s4() + "-" + s4() + s4() + "-" + s4() + "-" + s4() + s4() + s4()).toLowerCase();
     }
 
+    /**
+     * merge two arrays
+     * @param a
+     * @param b
+     * @returns {*}
+     */
     function merge(a, b) {
         Array.prototype.push.apply(a, b);
         return a;
     }
 
+    /**
+     * returns a function which returns stack or fn
+     * @param fn
+     * @param stack
+     * @returns {Function}
+     */
     function stackable(fn, stack) {
         return function (a, b) {
             return !a ?
@@ -108,6 +120,7 @@
      * @type {boolean}
      */
     Continuation.prototype.isContinuation = true;
+
     /**
      * complete the continued iteration
      * @param [args {Array}]
@@ -117,6 +130,7 @@
     Continuation.prototype.run = function (args, receiver) {
         return trampoline(this.fn).apply(receiver || this.receiver, args || this.args);
     };
+
     /**
      * value or state of a continuation
      * @returns {*}
@@ -124,6 +138,14 @@
     Continuation.prototype.value = function () {
         return (this.args && this.args.length === 2 && this.args[1] === undef) ? this.args[0] : this.args;
     };
+
+    /**
+     * returns a trampolined action
+     * @param action
+     * @param accumulator
+     * @param limit
+     * @returns {*}
+     */
     function iterate(action, accumulator, limit) {
         return trampoline(function iterating() {
             var self = this;
@@ -199,6 +221,7 @@
      * @type {Object}
      */
     Stack.pause = {};
+
     /**
      * @param {Stack|function}
      * @static
@@ -206,6 +229,7 @@
      * @throws {TypeError}
      */
     Stack.create = stackable(Stack, identity);
+
     /**
      * @param prop {string}
      * @param rename {string}
@@ -216,11 +240,13 @@
         this.prototype[rename] = this.prototype[prop];
         return this;
     };
+
     /**
      * used to identify stack instances
      * @type {boolean}
      */
     Stack.prototype.isStack = true;
+
     /**
      * used to return a continuation from a stack iterator
      * @returns {Object}
@@ -228,6 +254,7 @@
     Stack.prototype.pause = function () {
         return Stack.pause;
     };
+
     /**
      * [a[b[c]]].clone() // [a[b[c]]]
      * [a[b[c]]].clone(d) // [d[b[c]]]
@@ -240,6 +267,7 @@
     Stack.prototype.clone = function (fn, next) {
         return new Stack(fn || this.fn, next || this.next);
     };
+
     /**
      * [a].push(b) => [b[a]].push(c) => [c[b[a]]] // [c[b[a]]]
      * @param [fn {Stack|function}]
@@ -252,6 +280,7 @@
         stack.precedent().next = this;
         return stack;
     });
+
     /**
      * [a[b[c]]].pop() => [a], [b[c]] // [a]
      * @returns {Stack}
@@ -260,6 +289,7 @@
         this.next = undef;
         return this;
     };
+
     /**
      * [a[b[c]]].shift() => [a[b]] // [c]
      * @returns {Stack}
@@ -270,6 +300,7 @@
         p.next = undef;
         return removed;
     };
+
     /**
      * [a[b]].unshift(c) => [a[b[c]]] // [c]
      * @param [fn {Stack|function}]
@@ -279,6 +310,7 @@
     Stack.prototype.unshift = function (fn) {
         return this.precedent().insert(fn);
     };
+
     /**
      * [a].drop() // undefined
      * [a[b]].drop() => [a], [b] // [b]
@@ -288,6 +320,7 @@
         this.next = undef;
         return next;
     };
+
     /**
      * [a[b[c]]].remove() => [a[c]] // [a[c]]
      * @returns {Stack}
@@ -298,6 +331,7 @@
         }
         return this;
     };
+
     /**
      * [a].insert(b) => [a[b]] // [b].insert(c) => [a[b[c]]] // [c]
      * [a].insert([b]) => [a[b]] // [b].insert([c]) => [a[b[c]]] // [c]
@@ -313,6 +347,7 @@
         stack.next = next;
         return this;
     });
+
     /**
      * insert [a] before [b]
      * [a[b[c]]].before(b, d) => [a[b[d[c]]]] // [b[d[c]]]
@@ -326,6 +361,7 @@
     }, function (a, b) {
         return (this.precedent(a || undef) || this).insert(b);
     });
+
     /**
      * [a[b[c]]].index(1) // [b]
      * @param idx {number}
@@ -336,6 +372,7 @@
     }, function (val) {
         return [--val];
     });
+
     /**
      * @param id {string}
      * @returns {?Stack}
@@ -343,6 +380,7 @@
     Stack.prototype.find = recur(function (id) {
         return this.id === id;
     });
+
     /**
      * [a].uses(a) // true
      * @param [fn {function}]
@@ -351,12 +389,14 @@
     Stack.prototype.uses = function (fn) {
         return this.fn === fn;
     };
+
     /**
      * [a[b[c]]].using(b) // [b]
      * @param [fn {function}]
      * @returns {?Stack}
      */
     Stack.prototype.using = recur(Stack.prototype.uses);
+
     /**
      * [a[b[c]]].composedWith(b) // [a]
      * @param [fn {function}]
@@ -365,6 +405,7 @@
     Stack.prototype.composedWith = recur(function (fn) {
         return this.next && this.next.fn === fn;
     });
+
     /**
      * [a[b]].precedes([b]) // true
      * @param [stack {Stack}]
@@ -373,12 +414,14 @@
     Stack.prototype.precedes = function (stack) {
         return this.next === stack;
     };
+
     /**
      * [a[b[c]]].precedent([c]) // [b[c]]
      * @param [stack {Stack}]
      * @returns {?Stack}
      */
     Stack.prototype.precedent = recur(Stack.prototype.precedes);
+
     /**
      * [a[b[c[d]]]].superPrecedent([d]) // [b]
      * @param [stack {Stack}]
@@ -387,46 +430,47 @@
     Stack.prototype.superPrecedent = recur(function (stack) {
         return this.next && this.next.next === stack;
     });
+
     /**
-     * [a[b[c]]].distribute({x}) || a(x), b(x), c(x)
-     * [a[b[c]]].distribute({x}, ?) || ?.a(x), ?.b(x), ?.c(x)
+     * [a[b[c]]].assign({x}) || a(x), b(x), c(x)
+     * [a[b[c]]].assign({x}, ?) || ?.a(x), ?.b(x), ?.c(x)
      * @param [arg {*}]
      * @param [receiver {object}]
      * @returns {*|Continuation}
      */
-    //TODO rename to assign
-    Stack.prototype.distribute = iterate(call);
+    Stack.prototype.assign = iterate(call);
+
     /**
-     * [a[b[c]]].distributeAll([{x},{y},{z}]) || a(x,y,z), b(x,y,z), c(x,y,z)
-     * [a[b[c]]].distributeAll([{x},{y},{z}], ?) || ?.a(x,y,z), ?.b(x,y,z), ?.c(x,y,z)
+     * [a[b[c]]].spread([{x},{y},{z}]) || a(x,y,z), b(x,y,z), c(x,y,z)
+     * [a[b[c]]].spread([{x},{y},{z}], ?) || ?.a(x,y,z), ?.b(x,y,z), ?.c(x,y,z)
      * @param [args {array}]
      * @param [receiver {object}]
      * @returns {undefined|Continuation}
      */
-    //TODO rename to spread
-    Stack.prototype.distributeAll = iterate(apply);
+    Stack.prototype.spread = iterate(apply);
+
     /**
-     * [a[b[c]]].call({x}) // c(b(a(x)))
-     * [a[b[c]]].call({x}, ?) // ?.c(?.b(?.a(x)))
+     * [a[b[c]]].pipe({x}) // c(b(a(x)))
+     * [a[b[c]]].pipe({x}, ?) // ?.c(?.b(?.a(x)))
      * @param [arg {*}]
      * @param [receiver {object}]
      * @returns {*|Continuation}
      */
-    //TODO rename to pipe
-    Stack.prototype.call = iterate(call, function (val, arg, receiver) {
+    Stack.prototype.pipe = iterate(call, function (val, arg, receiver) {
         return [val, receiver];
     });
+
     /**
-     * [a[b[c]]].apply([{x},{y},{z}]) // c(b(a(x,y,z)))
-     * [a[b[c]]].apply([{x},{y},{z}], ?) // ?.c(?.b(?.a(x,y,z)))
+     * [a[b[c]]].funnel([{x},{y},{z}]) // c(b(a(x,y,z)))
+     * [a[b[c]]].funnel([{x},{y},{z}], ?) // ?.c(?.b(?.a(x,y,z)))
      * @param [args {array}]
      * @param [receiver {object}]
      * @returns {*|Continuation}
      */
-    //TODO rename to funnel
-    Stack.prototype.apply = iterate(apply, function (val, args, receiver) {
+    Stack.prototype.funnel = iterate(apply, function (val, args, receiver) {
         return [makeArray(val), receiver];
     });
+
     /**
      * [a[b[c]]].some() || !c() && !b() && !c() // true|false
      * [a[b[c]]].some({x}) || !c(x) && !b(x) && !c(x) // true|false
@@ -437,6 +481,7 @@
     Stack.prototype.some = iterate(call, null, function (val) {
         return val === true;
     });
+
     /**
      * [a[b[c]]].every() || c() && b() && c() // true|false
      * [a[b[c]]].every({x}) || c(x) && b(x) && c(x) // true|false
@@ -447,10 +492,12 @@
     Stack.prototype.every = iterate(call, null, function (val) {
         return val === false;
     });
+
     /**
      * @borrows push as from
      */
     Stack.alias("push", "from")
+
     /**
      * @borrows insert as to
      */

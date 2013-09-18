@@ -44,8 +44,8 @@ Stack
 ::= 'new'? 'Stack(' (Function ( StackInstance |) | ( '[' ( Function | StackInstance )* ']' ) ) ')' StackInstance
 
 call
-::= StackInstance '.call(' '*' ( ',' Object )? ')' ( call | continuation | promise | )* '*'
+::= StackInstance '.pipe(' '*' ( ',' Object )? ')' ( call | continuation | promise | )* '*'
 
 apply
-::= StackInstance '.apply(' '[' '*'* ']' ( ',' Object )? ')' ( apply | continuation | promise | )* '*'
+::= StackInstance '.funnel(' '[' '*'* ']' ( ',' Object )? ')' ( apply | continuation | promise | )* '*'
 </pre>

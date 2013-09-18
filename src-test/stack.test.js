@@ -47,10 +47,10 @@ test("instances of Stack have the correct api", function () {
     ok(typeof stack.precedes === "function");
     ok(typeof stack.precedent === "function");
     ok(typeof stack.superPrecedent === "function");
-    ok(typeof stack.distribute === "function");
-    ok(typeof stack.distributeAll === "function");
-    ok(typeof stack.call === "function");
-    ok(typeof stack.apply === "function");
+    ok(typeof stack.assign === "function");
+    ok(typeof stack.spread === "function");
+    ok(typeof stack.pipe === "function");
+    ok(typeof stack.funnel === "function");
     ok(typeof stack.some === "function");
     ok(typeof stack.every === "function");
     ok(typeof stack.from === "function");
@@ -139,7 +139,7 @@ test("Stack can create a stack from an array of functions and stacks", function 
     ok(stack.tail().fn === closeEmote);
     ok(stack.superPrecedent().fn === highFive);
 });
-test("call can compose a stack", function () {
+test("pipe can compose a stack", function () {
     function a(val) {
         return "a" + val;
     }
@@ -152,9 +152,9 @@ test("call can compose a stack", function () {
     var stackA = new Stack(a);
     var stackB = new Stack(b, stackA);
     var stackC = new Stack(c, stackB);
-    ok(stackC.call(1) === "abc1");
+    ok(stackC.pipe(1) === "abc1");
 });
-test("call can follow a stack returned by a stack.fn", function () {
+test("pipe can follow a stack returned by a stack.fn", function () {
     expect(2);
     function a(val) {
         return "a" + val;
@@ -169,10 +169,10 @@ test("call can follow a stack returned by a stack.fn", function () {
         return val === "c1" ? Stack(a) : Stack(b);
     }
     var stack = Stack([decide,c]);
-    ok(stack.call(1) === "ac1");
-    ok(stack.call(0) === "bc0");
+    ok(stack.pipe(1) === "ac1");
+    ok(stack.pipe(0) === "bc0");
 });
-test("call can take a receiver object", function () {
+test("pipe can take a receiver object", function () {
     expect(3);
     function sumA(data) {
         return this.a + data;
@@ -184,11 +184,11 @@ test("call can take a receiver object", function () {
         return this.c + data;
     }
     var obj = {a: "a", b: "b", c: "c"};
-    ok(Stack(sumA).call(1, obj) === "a1");
-    ok(Stack(sumA).push(sumB).call(1, obj) === "ab1");
-    ok(Stack(sumA).push(sumB).push(sumC).call(1, obj) === "abc1");
+    ok(Stack(sumA).pipe(1, obj) === "a1");
+    ok(Stack(sumA).push(sumB).pipe(1, obj) === "ab1");
+    ok(Stack(sumA).push(sumB).push(sumC).pipe(1, obj) === "abc1");
 });
-test("call will not overflow the stack", function () {
+test("pipe will not overflow the stack", function () {
     function add1(val) {
         return val + 1;
     }
@@ -200,7 +200,7 @@ test("call will not overflow the stack", function () {
         return val > 5000 ? Stack(stringVal) : stack;
     }
     stack.insert(decideAdd);
-    ok("recursive decisions should not overflow", stack.call(0) === "value is 5001");
+    ok("recursive decisions should not overflow", stack.pipe(0) === "value is 5001");
 });
 test("push of a function creates a new head", function() {
     expect(3);
@@ -213,9 +213,9 @@ test("push of a function creates a new head", function() {
     function c(val) {
         return "c" + val;
     }
-    ok(Stack(a).call(1) === "a1");
-    ok(Stack(a).push(b).call(1) === "ab1");
-    ok(Stack(a).push(b).push(c).call(1) === "abc1");
+    ok(Stack(a).pipe(1) === "a1");
+    ok(Stack(a).push(b).pipe(1) === "ab1");
+    ok(Stack(a).push(b).push(c).pipe(1) === "abc1");
 });
 test("push of a stack creates a new head from the stack head", function() {
     expect(7);
@@ -230,9 +230,9 @@ test("push of a stack creates a new head from the stack head", function() {
     }
     var stackB = Stack(b);
     var stackC = Stack(c);
-    ok(Stack(a).call(1) === "a1");
-    ok(Stack(a).push(Stack(b)).call(1) === "ab1");
-    ok(Stack(a).push(stackB).push(stackC).call(1) === "abc1");
+    ok(Stack(a).pipe(1) === "a1");
+    ok(Stack(a).push(Stack(b)).pipe(1) === "ab1");
+    ok(Stack(a).push(stackB).push(stackC).pipe(1) === "abc1");
     function sumA(data) {
         return this.a + data;
     }
@@ -245,12 +245,12 @@ test("push of a stack creates a new head from the stack head", function() {
     var obj = {a: "x", b: "y", c: "z"};
     stackB = Stack(sumB);
     stackC = Stack(sumC);
-    ok(Stack(sumA).call(1, obj) === "x1");
-    ok(Stack(sumA).push(Stack(sumB)).call(1, obj) === "xy1");
-    ok(Stack(sumA).push(stackB).push(stackC).call(1, obj) === "xyz1");
-    ok(Stack(sumA).push(Stack([a,b,c])).call(1, obj) === "xabc1");
+    ok(Stack(sumA).pipe(1, obj) === "x1");
+    ok(Stack(sumA).push(Stack(sumB)).pipe(1, obj) === "xy1");
+    ok(Stack(sumA).push(stackB).push(stackC).pipe(1, obj) === "xyz1");
+    ok(Stack(sumA).push(Stack([a,b,c])).pipe(1, obj) === "xabc1");
 });
-test("apply takes an array of parameters which pass to fn as arguments", function() {
+test("funnel takes an array of parameters which pass to fn as arguments", function() {
     expect(2);
     function flatten() {
         var args = Array.prototype.slice.call(arguments, 0);
@@ -270,10 +270,10 @@ test("apply takes an array of parameters which pass to fn as arguments", functio
             return a + b;
         });
     }
-    ok(Stack(sum).push(flatten).apply([[1],[2],[3]]) === 6);
-    ok(Stack([sum, doubleAll, flatten]).apply([[1],[2],[3]]) === 12);
+    ok(Stack(sum).push(flatten).funnel([[1],[2],[3]]) === 6);
+    ok(Stack([sum, doubleAll, flatten]).funnel([[1],[2],[3]]) === 12);
 });
-test("apply takes a receiver object as the second parameter", function () {
+test("funnel takes a receiver object as the second parameter", function () {
     expect(3);
     function flatten() {
         var args = Array.prototype.slice.call(arguments, 0);
@@ -295,12 +295,12 @@ test("apply takes a receiver object as the second parameter", function () {
         });
     }
     var obj = {seed: 1};
-    ok(Stack([sumThis, doubleAll, flatten]).apply([[1],[2],[3]], obj) === 14);
+    ok(Stack([sumThis, doubleAll, flatten]).funnel([[1],[2],[3]], obj) === 14);
     function decide(args, obj) {
         return arguments.length > 2 ? Stack(doubleAll, Stack(sumThis)) : [args, obj];
     }
-    ok(Stack([sumThis, decide, flatten]).apply([[1],[2],[3]], obj) === 14);
-    ok(Stack([sumThis, decide, flatten]).apply([[1],[2]], obj) === 4);
+    ok(Stack([sumThis, decide, flatten]).funnel([[1],[2],[3]], obj) === 14);
+    ok(Stack([sumThis, decide, flatten]).funnel([[1],[2]], obj) === 4);
 });
 test("drop will remove the head and return the next stack", function () {
     expect(2);
@@ -312,7 +312,7 @@ test("drop will remove the head and return the next stack", function () {
     }
     var stack = Stack([a,b]);
     stack = stack.drop();
-    ok(stack.call(1) === "a1");
+    ok(stack.pipe(1) === "a1");
     stack = stack.drop();
     ok(stack === undefined);
 });
@@ -328,7 +328,7 @@ test("remove will remove the next stack", function () {
     }
     var stack = Stack([a,b,c]);
     stack.remove();
-    ok(stack.call(1) === "ac1");
+    ok(stack.pipe(1) === "ac1");
 });
 test("insert can stack a function", function () {
     expect(3);
@@ -342,9 +342,9 @@ test("insert can stack a function", function () {
         return "c" + data;
     }
     var stack = Stack([a,c]);
-    ok(stack.call(1) === "ac1");
-    ok(stack.insert(b).call(1) === "ab1");
-    ok(stack.call(1) === "abc1");
+    ok(stack.pipe(1) === "ac1");
+    ok(stack.insert(b).pipe(1) === "ab1");
+    ok(stack.pipe(1) === "abc1");
 });
 test("insert can stack a stack", function () {
     expect(3);
@@ -359,9 +359,9 @@ test("insert can stack a stack", function () {
     }
     var stack = Stack([a,c]);
     var stackb = Stack(b);
-    ok(stack.call(1) === "ac1");
-    ok(stack.insert(stackb).call(1) === "abc1");
-    ok(stack.call(1) === "abc1");
+    ok(stack.pipe(1) === "ac1");
+    ok(stack.insert(stackb).pipe(1) === "abc1");
+    ok(stack.pipe(1) === "abc1");
 });
 test("tail returns the last stack, the stack with no next", function () {
     function fn1() {return 1;}
@@ -455,10 +455,10 @@ test("shift removes the tail and returns it", function () {
     function fn1() {return 1;}
     function fn2() {return 2;}
     var stack = Stack(fn1).push(fn2);
-    ok(stack.call() === 1);
+    ok(stack.pipe() === 1);
     var removed = stack.shift();
-    ok(stack.call() === 2);
-    ok(removed.call() === 1);
+    ok(stack.pipe() === 2);
+    ok(removed.pipe() === 1);
 });
 test("pop removes the head and returns it", function () {
     expect(5);
@@ -468,12 +468,12 @@ test("pop removes the head and returns it", function () {
     var stack1 = Stack(fn1);
     var stack2 = stack1.push(fn2);
     var stack3 = stack2.push(fn3);
-    ok(stack1.call() === 1);
+    ok(stack1.pipe() === 1);
     var removed = stack3.pop();
     ok(stack3 === removed);
-    ok(removed.call() === 3);
+    ok(removed.pipe() === 3);
     ok(typeof stack3.next === "undefined");
-    ok(stack2.call() === 1);
+    ok(stack2.pipe() === 1);
 });
 test("unshift places a new stack at the tail", function () {
     expect(2);
@@ -482,7 +482,7 @@ test("unshift places a new stack at the tail", function () {
     function fn3() {return 3;}
     var stack = Stack(fn1).push(fn2);
     ok(typeof stack.unshift(fn3).next === "undefined");
-    ok(stack.call() === 3);
+    ok(stack.pipe() === 3);
 });
 test("index returns the stack of n stack depth", function () {
     function fn1() {return 1;}
@@ -513,13 +513,13 @@ test("clone copies the stacks properties for a new instance", function () {
     }
     var stack = Stack([a, b, c]);
     var clone = stack.clone();
-    ok(stack.call(1) === clone.call(1));
+    ok(stack.pipe(1) === clone.pipe(1));
     clone = stack.clone(d);
-    ok(clone.call(1) === "abd1");
+    ok(clone.pipe(1) === "abd1");
     clone = stack.clone(null, Stack(d));
-    ok(clone.call(1) === "dc1");
+    ok(clone.pipe(1) === "dc1");
 });
-test("distribute provides the given argument to all stacks", function () {
+test("assign provides the given argument to all stacks", function () {
     expect(6);
     var aVal = 0;
     var bVal = 0;
@@ -537,16 +537,16 @@ test("distribute provides the given argument to all stacks", function () {
         return val === 0 ? Stack(b) : val;
     }
     var stack = Stack([a, decide, c]);
-    stack.distribute(1, {bonus: 1});
+    stack.assign(1, {bonus: 1});
     ok(aVal === 2);
     ok(bVal === 0);
     ok(cVal === 4);
-    stack.distribute(0);
+    stack.assign(0);
     ok(aVal = 2);
     ok(bVal = 1);
     ok(cVal = 2);
 });
-test("distribute can take a receiver object", function () {
+test("assign can take a receiver object", function () {
     expect(7);
     var aVal = 0;
     var bVal = 0;
@@ -561,19 +561,19 @@ test("distribute can take a receiver object", function () {
         cVal += (val + 2 + (this.bonus || 0));
     }
     var stack = Stack([a, b, c]);
-    ok(typeof stack.distribute(1) === "undefined");
+    ok(typeof stack.assign(1) === "undefined");
     ok(aVal === 1);
     ok(bVal === 2);
     ok(cVal === 3);
     aVal = 0;
     bVal = 0;
     cVal = 0;
-    stack.distribute(1, {bonus: 1});
+    stack.assign(1, {bonus: 1});
     ok(aVal === 2);
     ok(bVal === 3);
     ok(cVal === 4);
 });
-test("distribute will follow a returned stack", function () {
+test("assign will follow a returned stack", function () {
     expect(7);
     var aVal = 0;
     var bVal = 0;
@@ -591,16 +591,16 @@ test("distribute will follow a returned stack", function () {
         return val === 0 ? Stack(b) : val;
     }
     var stack = Stack([a, decide, c]);
-    ok(typeof stack.distribute(1) === "undefined");
+    ok(typeof stack.assign(1) === "undefined");
     ok(aVal === 1);
     ok(bVal === 0);
     ok(cVal === 3);
-    stack.distribute(0, {bonus: 1});
+    stack.assign(0, {bonus: 1});
     ok(aVal === 1);
     ok(bVal === 2);
     ok(cVal === 6);
 });
-test("distributeAll provides the given arguments list to all stacks", function () {
+test("spread provides the given arguments list to all stacks", function () {
     expect(4);
     var aVal = 0;
     var bVal = 0;
@@ -615,12 +615,12 @@ test("distributeAll provides the given arguments list to all stacks", function (
         cVal += (z + 2 + (this.bonus || 0));
     }
     var stack = Stack([a, b, c]);
-    ok(typeof stack.distributeAll([1, 2, 3]) === "undefined");
+    ok(typeof stack.spread([1, 2, 3]) === "undefined");
     ok(aVal === 1);
     ok(bVal === 3);
     ok(cVal === 5);
 });
-test("distributeAll can take a receiver object", function () {
+test("spread can take a receiver object", function () {
     expect(4);
     var aVal = 0;
     var bVal = 0;
@@ -635,12 +635,12 @@ test("distributeAll can take a receiver object", function () {
         cVal += (z + 2 + (this.bonus || 0));
     }
     var stack = Stack([a, b, c]);
-    ok(typeof stack.distributeAll([1, 2, 3], {bonus: 1}) === "undefined");
+    ok(typeof stack.spread([1, 2, 3], {bonus: 1}) === "undefined");
     ok(aVal === 2);
     ok(bVal === 4);
     ok(cVal === 6);
 });
-test("distributeAll will follow a returned stack", function () {
+test("spread will follow a returned stack", function () {
     expect(3);
     var aVal = 0;
     var bVal = 0;
@@ -658,7 +658,7 @@ test("distributeAll will follow a returned stack", function () {
         return this.bonus === 1 ? Stack(a) : Stack(b);
     }
     var stack = Stack([decide, c]);
-    stack.distributeAll([1, 2, 3], {bonus: 0});
+    stack.spread([1, 2, 3], {bonus: 0});
     ok(aVal === 0);
     ok(bVal === 3);
     ok(cVal === 5);
@@ -679,9 +679,9 @@ test("before inserts a stack before the given stack", function () {
     stack.before(a, b);
     stack.before(b, null);
     expect(1);
-    ok(stack.call(1) === "cba1");
+    ok(stack.pipe(1) === "cba1");
 });
-test("some distributes until a stack fn returns true", function () {
+test("some assigns until a stack fn returns true", function () {
     expect(4);
     var falsecount = 0;
     function truthy() {
@@ -753,7 +753,7 @@ test("some can follow a returned stack", function () {
     ok(stack.some(0) === false);
     ok(wasZero === true);
 });
-test("every distributes until a stack fn returns false", function () {
+test("every assigns until a stack fn returns false", function () {
     expect(4);
     var truecount = 0;
     function truthy() {
@@ -840,7 +840,7 @@ test("iterators can return a continuation", function () {
         return this.pause();
     }
     var stack = Stack([a,b,pause,c]);
-    var cont = stack.call(1);
+    var cont = stack.pipe(1);
     ok(cont.isContinuation === true);
 });
 test("continuations can be run to completion", function () {
@@ -857,7 +857,7 @@ test("continuations can be run to completion", function () {
         return this.pause();
     }
     var stack = Stack([a,b,pause,c]);
-    var cont = stack.call(1);
+    var cont = stack.pipe(1);
     ok(cont.run() === "abc1");
 });
 test("continuations can return current value", function () {
@@ -874,7 +874,7 @@ test("continuations can return current value", function () {
         return this.pause();
     }
     var stack = Stack([a,b,pause,c]);
-    var cont = stack.call(1);
+    var cont = stack.pipe(1);
     ok(cont.value() === "c1");
 });
 test("find can return a stack by id", function () {
@@ -897,7 +897,7 @@ test("stacks will fill a debug method while iterating", function () {
     stack.debug = function (arg) {
         output[this.id] = arg;
     }
-    stack.call(1);
+    stack.pipe(1);
     ok(output[stack.id][0] = 1);
 });
 //doesn't work with JSTestDriver adapter
@@ -907,7 +907,7 @@ test("stackable methods throw errors", function () {
         function () {stack.push({})}
     );
 });
-asyncTest("stacks can return a promise during distribute", function () {
+asyncTest("stacks can return a promise during assign", function () {
     var defer;
     var value = false;
     var s = Stack([function () {
@@ -917,7 +917,7 @@ asyncTest("stacks can return a promise during distribute", function () {
         return defer.promise;
     }]);
     ok("value initialized to false", value === false);
-    s.distribute();
+    s.assign();
     ok("value remains false when stack returns a promise", value === false);
     setTimeout(function() {
         defer.resolve();
@@ -925,7 +925,7 @@ asyncTest("stacks can return a promise during distribute", function () {
         start();
     }, 100);
 });
-asyncTest("stacks can return a promise during distributeAll", function () {
+asyncTest("stacks can return a promise during spread", function () {
     var defer;
     var value = null;
     var s = Stack([function (x, y) {
@@ -935,7 +935,7 @@ asyncTest("stacks can return a promise during distributeAll", function () {
         return defer.promise;
     }]);
     ok("value initialized to false", value === null);
-    s.distributeAll([1, 2]);
+    s.spread([1, 2]);
     ok("value remains false when stack returns a promise", value === null);
     setTimeout(function() {
         defer.resolve();
@@ -943,7 +943,7 @@ asyncTest("stacks can return a promise during distributeAll", function () {
         start();
     }, 100);
 });
-asyncTest("stacks can return a promise during call", function () {
+asyncTest("stacks can return a promise during pipe", function () {
     var defer;
     var value = null;
     var s = Stack([function (x) {
@@ -953,7 +953,7 @@ asyncTest("stacks can return a promise during call", function () {
         return defer.promise;
     }]);
     ok("value initialized to false", value === null);
-    s.call(1);
+    s.pipe(1);
     ok("value remains false when stack returns a promise", value === null);
     setTimeout(function() {
         defer.resolve();
@@ -961,7 +961,7 @@ asyncTest("stacks can return a promise during call", function () {
         start();
     }, 100);
 });
-asyncTest("stacks can return a promise during apply", function () {
+asyncTest("stacks can return a promise during funnel", function () {
     var defer;
     var value = null;
     var s = Stack([function (x, y) {
@@ -971,7 +971,7 @@ asyncTest("stacks can return a promise during apply", function () {
         return defer.promise;
     }]);
     ok("value initialized to false", value === null);
-    s.apply([1, 2]);
+    s.funnel([1, 2]);
     ok("value remains false when stack returns a promise", value === null);
     setTimeout(function() {
         defer.resolve();

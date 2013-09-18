@@ -1,10 +1,10 @@
 module("Promise");
 asyncTest("promises", function () {
-    expect(6);
+    start();
     var status = null;
     function reset(promise) {
         status = null;
-        promise.state = new Promise().state;
+        promise.state = "pending";
     }
 
     var p1 = Promise(function () {
@@ -14,33 +14,20 @@ asyncTest("promises", function () {
     });
 
     p1.when(true);
-    ok(status === "done");
+    ok("promise of true value is resolved", status === "done");
     reset(p1);
 
     p1.when(false);
+    ok("promise of false value is rejected", status === "fail");
     reset(p1);
-    ok(status === "fail");
 
     p1.when(function () {
         return true;
     });
-    ok(status === "done");
+    ok("promise of function is resolved because it evaluates to true", status === "done");
     reset(p1);
 
-    var p2 = Promise();
-    var p3 = Promise(function (data) {
-        if (data === "finish") {
-            p2.resolve()
-        } else {
-            status = "miss";
-        }
-    });
-    p1.when(p2, p3);
-    ok(status === "miss");
-    p3.resolveWith(null, "finish");
-    ok(status === "done");
-    reset(p1);
-
+    stop();
     p1.when(function () {
         var p = new Promise();
         setTimeout(function () {
