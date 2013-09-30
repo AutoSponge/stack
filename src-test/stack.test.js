@@ -860,6 +860,7 @@ test("continuations can be run to completion", function () {
     var cont = stack.pipe(1);
     ok(cont.run() === "abc1");
 });
+//pause with a receiver
 test("continuations can return current value", function () {
     function a(val) {
         return "a" + val;

@@ -1,18 +1,17 @@
 /**
  * Stack - an implementation of singly-linked lists
  * notation key
- * a                    = function 'a'
  * [a]                  = an instance of Stack with the function 'a'
- * <action> => <result> = a transformation of the Stack/Stack sequence
- * <action> // <result> = a return value
- * <action> || <result> = the effect of the <action>
+ * [x]                  = the empty stack or undefined
+ * <stack> -> <stack>   = a link between stacks
+ * // <value>           = a return value
+ * <action> :: <result> = the effect of a method
  * [a,b,c]              = an array of functions 'a', 'b', 'c'
  * [identity]           = an instance of Stack with 'identity' function
- * [a[b]]               = an instance of Stack with function 'a' and a next [b]
- * [a[b[c]]]            = an instance of Stack with the head [a] and tail [c]
+ * [a] -> b             = an instance of Stack with fn 'a' and a linked stack b
+ * [a] -> [c] -> [x]    = an instance of Stack with fn 'a' and tail [c]
  * {x}                  = some value x
  * [{x},{y}]            = an array of values {x} and {y}
- * a(x)                 = function 'a' invoked with argument {x}
  * a(x, y)              = function 'a' invoked with arguments {x} and {y}
  * ?                    = an object
  * &&                   = logical and
@@ -36,10 +35,10 @@
     }
 
     /**
-     * merge two arrays
-     * @param a
-     * @param b
-     * @returns {*}
+     * merge a second array-like object into the first
+     * @param a {array|Arguments}
+     * @param b {array|Arguments}
+     * @returns {array|Arguments}
      */
     function merge(a, b) {
         Array.prototype.push.apply(a, b);
@@ -47,10 +46,10 @@
     }
 
     /**
-     * returns a function which returns stack or fn
-     * @param fn
-     * @param stack
-     * @returns {Function}
+     * returns a strategy function
+     * @param fn {function} for function param
+     * @param stack {function} for stack param
+     * @returns {function}
      */
     function stackable(fn, stack) {
         return function (a, b) {
@@ -64,22 +63,46 @@
         };
     }
 
+    /**
+     * @param [val {*}]
+     * @returns {array}
+     */
     function makeArray(val) {
         return Array.isArray(val) ? val : val ? [val] : [];
     }
 
+    /**
+     * returns its parameter or arguments object
+     * @param [val {*}]
+     * @returns {Arguments}
+     */
     function identity(val) {
         return arguments.length > 1 ? arguments : val;
     }
 
+    /**
+     * @param arg {*}
+     * @param [receiver {object}]
+     * @returns {*}
+     */
     function call(arg, receiver) {
         return this.fn.call(receiver || this, arg);
     }
 
+    /**
+     * @param args {array|Arguments}
+     * @param [receiver {object}]
+     * @returns {*}
+     */
     function apply(args, receiver) {
         return this.fn.apply(receiver || this, args);
     }
 
+    /**
+     * for bouncing
+     * @param fn {function}
+     * @returns {function}
+     */
     function trampoline(fn) {
         return function () {
             var bounce = fn.apply(this, arguments);
@@ -90,6 +113,13 @@
         };
     }
 
+    /**
+     * returns a function capable of traversing the stack-list until
+     * a condition is met then returning the current stack
+     * @param matcher {function} condition to match
+     * @param [transformer {function}] alters parameters
+     * @returns {function}
+     */
     function recur(matcher, transformer) {
         return trampoline(function recurring() {
             var self = this;
@@ -106,13 +136,13 @@
     /**
      * @param fn {function}
      * @param receiver {Stack}
-     * @param args {Array}
+     * @param [args {Array}]
      * @constructor
      */
     function Continuation(fn, receiver, args) {
         this.fn = fn;
         this.receiver = receiver;
-        this.args = args;
+        this.args = args || [];
     }
 
     /**
@@ -140,11 +170,13 @@
     };
 
     /**
-     * returns a trampolined action
-     * @param action
-     * @param accumulator
-     * @param limit
-     * @returns {*}
+     * return a function capable of traversing the stack-list
+     * executing an action on each stack until a limit is
+     * reached and returning the accumulator or last value
+     * @param action {function}
+     * @param [accumulator {function}]
+     * @param [limit {function}]
+     * @returns {function}
      */
     function iterate(action, accumulator, limit) {
         return trampoline(function iterating() {
@@ -185,12 +217,16 @@
         });
     }
 
+    //region Construction
     /**
-     * Stack() => [identity] // [identity]
-     * Stack(a) => [a] // [a]
-     * Stack([a,b,c]) => [c[b[a]]] // [c[b[a]]]
-     * Stack(a, [b]) => [a[b]] // [a[b]]
-     * Stack([a, [b[c]]]) => [b[c[a]]] // [b[c[a]]]
+     * Stack() // [identity] -> [x]
+     * Stack(a) // [a] -> [x]
+     * Stack([b] -> [c] -> [x]) // [b] -> [c] -> [x]
+     * Stack([b] -> [c] -> [x], [a] -> [x]) // [b] -> [a] -> [x]
+     * Stack([a,b,c]) // [c] -> [b] -> [a] -> [x]
+     * Stack(a, [b] -> [x]) // [a] -> [b] -> [x]
+     * Stack([a, [b] -> [c] -> [x]]) => [b] -> [c] -> [a] -> [x]
+     * Stack([[a] -> [b] -> [x], [c] -> [x]]) //
      * @param fn {function|array}
      * @param next [{?Stack}]
      * @returns {Stack}
@@ -209,6 +245,9 @@
                 return stack.push(f);
             }, Stack.create(arr.shift()));
         }
+        if (fn && fn.isStack) {
+            return next && next.isStack ? new Stack(fn.fn, next) : fn;
+        }
         if (!(this instanceof Stack)) {
             return new Stack(fn, next);
         }
@@ -217,18 +256,34 @@
     }
 
     /**
-     * the common pause object
-     * @type {Object}
-     */
-    Stack.pause = {};
-
-    /**
      * @param {Stack|function}
      * @static
      * @returns {Stack}
      * @throws {TypeError}
      */
     Stack.create = stackable(Stack, identity);
+
+    /**
+     * stack = [a] -> [b] -> [c] -> [x]
+     * stack.clone() // [a] -> [b] -> [c] -> [x]
+     * stack.clone(d) // [d] -> [b] -> [c] -> [x]
+     * stack.clone(null, [d]) // [a] -> [d] -> [x]
+     * stack.clone(d, [e]) // [d] -> [e] ->  [x]
+     * @param [fn {function}]
+     * @param [next {Stack}]
+     * @returns {Stack}
+     */
+    Stack.prototype.clone = function (fn, next) {
+        return new Stack(fn || this.fn, next || this.next);
+    };
+    //endregion
+
+    //region Utilities
+    /**
+     * the common pause object
+     * @type {Object}
+     */
+    Stack.pause = {};
 
     /**
      * @param prop {string}
@@ -254,22 +309,13 @@
     Stack.prototype.pause = function () {
         return Stack.pause;
     };
+    //endregion
 
+    //region Manipulation
     /**
-     * [a[b[c]]].clone() // [a[b[c]]]
-     * [a[b[c]]].clone(d) // [d[b[c]]]
-     * [a[b[c]]].clone(null, [d]) // [a[d]]
-     * [a[b[c]]].clone(d, [e]) // [d[e]]
-     * @param [fn {function}]
-     * @param [next {Stack}]
-     * @returns {Stack}
-     */
-    Stack.prototype.clone = function (fn, next) {
-        return new Stack(fn || this.fn, next || this.next);
-    };
-
-    /**
-     * [a].push(b) => [b[a]].push(c) => [c[b[a]]] // [c[b[a]]]
+     * stack = [a] -> [x]
+     * stack = stack.push(b) // [b] -> [a] -> [x]
+     * stack.push([c] -> [x]) // [c] -> [b] -> [a] -> [x]
      * @param [fn {Stack|function}]
      * @returns {Stack}
      * @throws {TypeError}
@@ -282,7 +328,10 @@
     });
 
     /**
-     * [a[b[c]]].pop() => [a], [b[c]] // [a]
+     * removes the HEAD of a stack-list
+     * stack = [a] -> [b] -> [c] -> [x]
+     * stack.pop() // [a] -> [x]
+     * stack === [a] -> [x]
      * @returns {Stack}
      */
     Stack.prototype.pop = function () {
@@ -291,7 +340,10 @@
     };
 
     /**
-     * [a[b[c]]].shift() => [a[b]] // [c]
+     * removes the TAIL of a stack-list
+     * stack = [a] -> [b] -> [c] -> [x]
+     * stack.shift() // [c] -> [x]
+     * stack === [a] -> [b] -> [x]
      * @returns {Stack}
      */
     Stack.prototype.shift = function () {
@@ -302,18 +354,24 @@
     };
 
     /**
-     * [a[b]].unshift(c) => [a[b[c]]] // [c]
+     * place a stack at the TAIL of the stack-list
+     * stack = [a] -> [b] -> [x]
+     * stack.unshift(c) // [c] -> [x]
+     * stack === [a] -> [b] -> [c] -> [x]
      * @param [fn {Stack|function}]
      * @returns {Stack}
-     * @throws {TypeError}
      */
     Stack.prototype.unshift = function (fn) {
         return this.precedent().insert(fn);
     };
 
     /**
-     * [a].drop() // undefined
-     * [a[b]].drop() => [a], [b] // [b]
+     * remove a stack from its stack-list
+     * stack = [a] -> [x]
+     * stack.drop() // undefined
+     * stack = [a] -> [b] -> [x]
+     * stack.drop() // [b] -> [x]
+     * stack === [a] -> [x]
      */
     Stack.prototype.drop = function () {
         var next = this.next;
@@ -322,7 +380,8 @@
     };
 
     /**
-     * [a[b[c]]].remove() => [a[c]] // [a[c]]
+     * stack = [a] -> [b] -> [c] -> [x]
+     * stack.remove() // [a] -> [c] -> [x]
      * @returns {Stack}
      */
     Stack.prototype.remove = function () {
@@ -333,8 +392,10 @@
     };
 
     /**
-     * [a].insert(b) => [a[b]] // [b].insert(c) => [a[b[c]]] // [c]
-     * [a].insert([b]) => [a[b]] // [b].insert([c]) => [a[b[c]]] // [c]
+     * stack = [a] -> [x]
+     * stack.insert(b) // [b] -> [x]
+     * stack.insert([b]) // [b] -> [x]
+     * stack === [a] -> [b] -> [x]
      * @param [fn {Stack|function}]
      * @returns {Stack}
      * @throws {TypeError}
@@ -350,7 +411,9 @@
 
     /**
      * insert [a] before [b]
-     * [a[b[c]]].before(b, d) => [a[b[d[c]]]] // [b[d[c]]]
+     * stack = [a] -> [b] -> [c] -> [x]
+     * stack.before(b, d) // [b] -> [d] -> [c] -> [x]
+     * stack === [a] -> [b] -> [d] -> [c] -> [x]
      * @param [a {?Stack|function}]
      * @param [b {?Stack|function}]
      * @returns {Stack}
@@ -361,9 +424,12 @@
     }, function (a, b) {
         return (this.precedent(a || undef) || this).insert(b);
     });
+    //endregion
 
+    //region Search
     /**
-     * [a[b[c]]].index(1) // [b]
+     * stack = [a] -> [b] -> [c] -> [x]
+     * stack.index(1) // [b] -> [c] -> [x]
      * @param idx {number}
      * @returns {?Stack}
      */
@@ -382,7 +448,8 @@
     });
 
     /**
-     * [a].uses(a) // true
+     * stack = [a] -> [x]
+     * stack.uses(a) // true
      * @param [fn {function}]
      * @returns {boolean}
      */
@@ -391,14 +458,16 @@
     };
 
     /**
-     * [a[b[c]]].using(b) // [b]
+     * stack = [a] -> [b] -> [c] -> [x]
+     * stack.using(b) // [b] -> [c] -> [x]
      * @param [fn {function}]
      * @returns {?Stack}
      */
     Stack.prototype.using = recur(Stack.prototype.uses);
 
     /**
-     * [a[b[c]]].composedWith(b) // [a]
+     * stack = [a] -> [b] -> [c] -> [x]
+     * stack.composedWith(b) // [a] -> [b] -> [c] -> [x]
      * @param [fn {function}]
      * @returns {?Stack}
      */
@@ -407,7 +476,8 @@
     });
 
     /**
-     * [a[b]].precedes([b]) // true
+     * stack = [a] -> [b] -> [x]
+     * stack.precedes([b] -> [x]) // true
      * @param [stack {Stack}]
      * @returns {boolean}
      */
@@ -416,24 +486,49 @@
     };
 
     /**
-     * [a[b[c]]].precedent([c]) // [b[c]]
+     * stack = [a] -> [b] -> [c] -> [x]
+     * stack.precedent([c] -> [x]) // [b] -> [c] -> [x]
      * @param [stack {Stack}]
      * @returns {?Stack}
      */
     Stack.prototype.precedent = recur(Stack.prototype.precedes);
 
     /**
-     * [a[b[c[d]]]].superPrecedent([d]) // [b]
+     * stack = [a] -> [b] -> [c] -> [d] -> [x]
+     * stack.superPrecedent([d] -> [x]) // [b] -> [c] -> [d] -> [x]
      * @param [stack {Stack}]
      * @returns {?Stack}
      */
     Stack.prototype.superPrecedent = recur(function (stack) {
         return this.next && this.next.next === stack;
     });
+    //endregion
+
+    //region Execution
+    /**
+     * returns a function capable of traversing the stack-list
+     * until a limit is reached and returning the accumulator
+     * or last value
+     * @param action
+     * @param accumulator
+     * @param limit
+     * @returns {function}
+     */
+    Stack.prototype.iterate = iterate;
 
     /**
-     * [a[b[c]]].assign({x}) || a(x), b(x), c(x)
-     * [a[b[c]]].assign({x}, ?) || ?.a(x), ?.b(x), ?.c(x)
+     * returns a function capable of traversing the stack-list until
+     * a condition is met then returning the current stack
+     * @param matcher {function} condition to match
+     * @param transformer {function} alters parameters
+     * @returns {function}
+     */
+    Stack.prototype.recur = recur;
+
+    /**
+     * stack = [a] -> [b] -> [c] -> [x]
+     * stack.assign({x}) :: a(x), b(x), c(x) // c(x)
+     * stack.assign({x}, ?) :: ?.a(x), ?.b(x), ?.c(x) // ?.c(x)
      * @param [arg {*}]
      * @param [receiver {object}]
      * @returns {*|Continuation}
@@ -441,8 +536,9 @@
     Stack.prototype.assign = iterate(call);
 
     /**
-     * [a[b[c]]].spread([{x},{y},{z}]) || a(x,y,z), b(x,y,z), c(x,y,z)
-     * [a[b[c]]].spread([{x},{y},{z}], ?) || ?.a(x,y,z), ?.b(x,y,z), ?.c(x,y,z)
+     * stack = [a] -> [b] -> [c] -> [x]
+     * stack.spread([{x},{y},{z}]) :: a(x,y,z), b(x,y,z), c(x,y,z) // c(x,y,z)
+     * stack.spread([{x},{y},{z}], ?) :: ?.a(x,y,z), ?.b(x,y,z), ?.c(x,y,z) // ?.c(x,y,z)
      * @param [args {array}]
      * @param [receiver {object}]
      * @returns {undefined|Continuation}
@@ -450,8 +546,9 @@
     Stack.prototype.spread = iterate(apply);
 
     /**
-     * [a[b[c]]].pipe({x}) // c(b(a(x)))
-     * [a[b[c]]].pipe({x}, ?) // ?.c(?.b(?.a(x)))
+     * stack = [a] -> [b] -> [c] -> [x]
+     * stack.pipe({x}) // c(b(a(x)))
+     * stack.pipe({x}, ?) // ?.c(?.b(?.a(x)))
      * @param [arg {*}]
      * @param [receiver {object}]
      * @returns {*|Continuation}
@@ -461,8 +558,9 @@
     });
 
     /**
-     * [a[b[c]]].funnel([{x},{y},{z}]) // c(b(a(x,y,z)))
-     * [a[b[c]]].funnel([{x},{y},{z}], ?) // ?.c(?.b(?.a(x,y,z)))
+     * stack = [a] -> [b] -> [c] -> [x]
+     * stack.funnel([{x},{y},{z}]) // c(b(a(x,y,z)))
+     * stack.funnel([{x},{y},{z}], ?) // ?.c(?.b(?.a(x,y,z)))
      * @param [args {array}]
      * @param [receiver {object}]
      * @returns {*|Continuation}
@@ -472,8 +570,9 @@
     });
 
     /**
-     * [a[b[c]]].some() || !c() && !b() && !c() // true|false
-     * [a[b[c]]].some({x}) || !c(x) && !b(x) && !c(x) // true|false
+     * stack = [a] -> [b] -> [c] -> [x]
+     * stack.some() :: !c() && !b() && !c() // true|false
+     * stack.some({x}) :: !c(x) && !b(x) && !c(x) // true|false
      * @param [arg {*}]
      * @param [receiver {object}]
      * @returns {boolean|Continuation}
@@ -483,8 +582,9 @@
     });
 
     /**
-     * [a[b[c]]].every() || c() && b() && c() // true|false
-     * [a[b[c]]].every({x}) || c(x) && b(x) && c(x) // true|false
+     * stack = [a] -> [b] -> [c] -> [x]
+     * stack.every() :: c() && b() && c() // true|false
+     * stack.every({x}) :: c(x) && b(x) && c(x) // true|false
      * @param [arg {*}]
      * @param [receiver {object}]
      * @returns {boolean|Continuation}
@@ -492,12 +592,12 @@
     Stack.prototype.every = iterate(call, null, function (val) {
         return val === false;
     });
+    //endregion
 
     /**
      * @borrows push as from
      */
     Stack.alias("push", "from")
-
     /**
      * @borrows insert as to
      */
