@@ -163,7 +163,7 @@ var a = function (x) {return x + "a";},
     b = function (x) {return x + "b";},
     c = Stack(function (x) {return x + "c";}),
     gotoC = function (x) {return x.length > 1 ? c : x;},
-    s  = Stack([sc,b,gotoC,a])
+    s  = Stack([c,b,gotoC,a])
 s.pipe("1") // "1ac"
 s.pipe("") // "abc"
 ```
