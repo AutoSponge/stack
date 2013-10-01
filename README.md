@@ -15,7 +15,7 @@ When the `->` points to a name without brackets, like `-> myStack`, the name rep
 
 ## Contents
 
-I divided the API into four main sections:
+I divided the API into five main sections:
 
 - [Construction](#construction)
 - [Utilities](#utilities)
