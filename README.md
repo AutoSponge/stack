@@ -17,23 +17,23 @@ When the `->` points to a name without brackets, like `-> myStack`, the name rep
 
 I divided the API into four main sections:
 
-- [Construction](#Construction)
-- [Utilities](#Utilities)
-- [Manipulation](#Manipulation)
-- [Search](#Search)
-- [Execution](#Execution):
-    - [flow control](#Flow)
-    - [composition](#Composition)
-    - [continuation](#Continuation)
-    - [promise](#Promise)
-    - [branching logic](#Branching)
-    - [recursion](#Recursion)
+- [Construction](#construction)
+- [Utilities](#utilities)
+- [Manipulation](#manipulation)
+- [Search](#search)
+- [Execution](#execution):
+    - [flow control](#flow)
+    - [composition](#composition)
+    - [continuation](#continuation)
+    - [promise](#promise)
+    - [branching logic](#branching)
+    - [recursion](#recursion)
 
 ## Construction
 
 Each instance of *Stack* is a _NODE_.  Each _NODE_ linked to another stack is the _HEAD_
 of that *stack-list*.  Any _NODE_ not linked to another stack is a _TAIL_.  Other positions
-in a stack list have names for convenience and [searching](#Search).
+in a stack list have names for convenience and [searching](#search).
 
 ![stack](img/stack.png)
 
@@ -54,7 +54,7 @@ Examples with an array:
 ## Utilities
 
 `Stack.alias`, a static method, allows you to create your own grammar by renaming methods.
-`.pause()` allows stack execution to stop and return a [Continuation](#Continuation).
+`.pause()` allows stack execution to stop and return a [Continuation](#continuation).
 
 ## Manipulation
 
