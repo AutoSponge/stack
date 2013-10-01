@@ -150,7 +150,7 @@ Stack([function () {
 //value will remain false until the promise is resolved.
 ```
 
-If a stack returns a resolved promise, its `.then()` method will be executing immediately.
+If a stack returns a resolved promise, its `.then()` method will be executed immediately.
 
 ### Branching
 
