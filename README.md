@@ -85,7 +85,7 @@ in place of the stack.
 
 ### Flow
 
-Stacks can be understood as series of atomic operations, a simple, imperative program.
+Stacks can be understood as series of atomic operations; a simple, imperative program.
 `.assign()` and `.spread()` can provide argument(s) to each function in the series, executing each
 step until: completion, continuation, or promise.
 
