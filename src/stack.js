@@ -502,6 +502,15 @@
     Stack.prototype.superPrecedent = recur(function (stack) {
         return this.next && this.next.next === stack;
     });
+
+    /**
+     * returns a function capable of traversing the stack-list until
+     * a condition is met then returning the current stack
+     * @param matcher {function} condition to match
+     * @param transformer {function} alters parameters
+     * @returns {function}
+     */
+    Stack.prototype.recur = recur;
     //endregion
 
     //region Execution
@@ -515,15 +524,6 @@
      * @returns {function}
      */
     Stack.prototype.iterate = iterate;
-
-    /**
-     * returns a function capable of traversing the stack-list until
-     * a condition is met then returning the current stack
-     * @param matcher {function} condition to match
-     * @param transformer {function} alters parameters
-     * @returns {function}
-     */
-    Stack.prototype.recur = recur;
 
     /**
      * stack = [a] -> [b] -> [c] -> [x]
