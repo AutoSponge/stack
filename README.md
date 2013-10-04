@@ -1,4 +1,4 @@
-# Stack
+# Stack v0.1.0
 
 *Stack* places any number of functions into a
 [singly-linked list](http://en.wikipedia.org/wiki/Linked_list) structure.  You can modify
