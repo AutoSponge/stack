@@ -11,7 +11,7 @@ And the `[x]` is a special notation representing `undefined` or the _empty stack
 be confused with the identity stack).
 When the `->` points to a name without brackets, like `-> myStack`, the name represents a stack.
 
-*Stack* encourages small units of testable, reusable code.
+*Stack* encourages small units of testable, reusable code (and it's only *4k* minified!).
 
 ## Contents
 
