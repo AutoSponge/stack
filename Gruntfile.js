@@ -43,5 +43,6 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-contrib-qunit');
     grunt.loadNpmTasks('grunt-complexity');
     grunt.registerTask('complex', 'complexity');
-    grunt.registerTask('default', ['jshint', 'qunit', 'uglify']);
+    grunt.registerTask('build', ['jshint', 'qunit', 'uglify']);
+    grunt.registerTask('default', ['jshint', 'qunit']);
 };
